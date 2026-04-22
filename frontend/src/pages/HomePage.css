@@ -1,0 +1,108 @@
+.home {
+  width: 100%;
+}
+
+.home-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 56px 24px 64px;
+  text-align: center;
+  color: #fff;
+  background: linear-gradient(145deg, #061a33 0%, #0f3566 42%, #1558a6 100%);
+}
+
+.home-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 55% at 50% 120%, rgba(255, 255, 255, 0.12), transparent 55%),
+    radial-gradient(circle at 10% 20%, rgba(64, 169, 255, 0.18), transparent 45%),
+    radial-gradient(circle at 90% 10%, rgba(120, 200, 255, 0.12), transparent 40%);
+  pointer-events: none;
+}
+
+.home-hero-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.home-hero-badge {
+  display: inline-block;
+  margin-bottom: 16px;
+  padding: 4px 14px;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+}
+
+.home-hero-title {
+  margin: 0 0 12px !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.02em;
+}
+
+.home-hero-subtitle {
+  margin: 0 auto 28px !important;
+  max-width: 560px;
+  font-size: 16px !important;
+  line-height: 1.65 !important;
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+.home-body {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 24px 56px;
+}
+
+.home-section-title {
+  margin: 0 0 8px !important;
+  text-align: center;
+}
+
+.home-section-desc {
+  margin: 0 auto 28px !important;
+  max-width: 520px;
+  text-align: center;
+}
+
+.home-feature-card {
+  height: 100%;
+  border-radius: 12px !important;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.home-feature-card:hover {
+  box-shadow: 0 12px 40px rgba(15, 53, 102, 0.12) !important;
+  transform: translateY(-2px);
+}
+
+.home-feature-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 12px;
+  font-size: 22px;
+  color: #1677ff;
+  background: rgba(22, 119, 255, 0.08);
+  border-radius: 10px;
+}
+
+.home-dev-panel {
+  margin-top: 8px;
+  border-radius: 12px !important;
+}
+
+.home-dev-panel .ant-collapse-header {
+  font-weight: 500;
+}
