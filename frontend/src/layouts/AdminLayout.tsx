@@ -3,10 +3,13 @@
  * 文案、路由、权限过滤由后端与 Django Admin 管控；前端负责展示、路由跳转与布局交互。
  */
 import {
+  BellOutlined,
+  GlobalOutlined,
   HomeOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  SearchOutlined,
   UserOutlined,
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
@@ -26,6 +29,7 @@ import {
 } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { DEFAULT_AVATAR_URL } from '../api/me'
 import type { NavMenuNode } from '../api/navMenu'
 import { fetchNavMenu } from '../api/navMenu'
 import { useAuth } from '../auth/useAuth'
@@ -43,10 +47,23 @@ const toAntdMenuItems = (nodes: NavMenuNode[]): MenuProps['items'] =>
     children: n.children?.length ? toAntdMenuItems(n.children) : undefined,
   }))
 
+const getDisplayName = (user: ReturnType<typeof useAuth>['user']) => {
+  if (!user) {
+    return '未登录'
+  }
+  const fullName = [user.last_name, user.first_name].filter(Boolean).join('')
+  return fullName || user.username || user.email || '用户'
+}
+
+const getAvatarText = (name: string) => {
+  const trimmed = name.trim()
+  return trimmed ? trimmed.slice(0, 1).toUpperCase() : undefined
+}
+
 const AdminLayout = () => {
   const { message } = App.useApp()
   const [collapsed, setCollapsed] = useState(false)
-  const { logout } = useAuth()
+  const { access, logout, user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const { token } = theme.useToken()
@@ -55,6 +72,11 @@ const AdminLayout = () => {
   const [navTree, setNavTree] = useState<NavMenuNode[]>([])
 
   const loadNavMenu = useCallback(async () => {
+    if (!access) {
+      setNavLoading(false)
+      setNavTree([])
+      return
+    }
     setNavLoading(true)
     try {
       const data = await fetchNavMenu()
@@ -65,7 +87,7 @@ const AdminLayout = () => {
     } finally {
       setNavLoading(false)
     }
-  }, [message])
+  }, [access, message])
 
   useEffect(() => {
     // 挂载时向后端拉取菜单；状态更新在 loadNavMenu 的异步流程中完成
@@ -104,6 +126,11 @@ const AdminLayout = () => {
 
   const userMenuItems: MenuProps['items'] = [
     {
+      key: 'profile',
+      icon: <UserOutlined />,
+      label: '个人中心',
+    },
+    {
       key: 'portal',
       icon: <HomeOutlined />,
       label: <Link to="/">返回门户首页</Link>,
@@ -118,6 +145,10 @@ const AdminLayout = () => {
   ]
 
   const onUserMenuClick: MenuProps['onClick'] = ({ key }) => {
+    if (key === 'profile') {
+      navigate('/admin/account/profile')
+      return
+    }
     if (key === 'logout') {
       logout()
       navigate('/login', { replace: true })
@@ -125,20 +156,32 @@ const AdminLayout = () => {
   }
 
   const breadcrumbItems = useMemo(() => {
-    if (trail?.length) {
-      return trail.map((n, i) => ({
-        title:
-          i === trail.length - 1 ? (
-            n.title
-          ) : n.path ? (
-            <Link to={n.path}>{n.title}</Link>
-          ) : (
-            n.title
-          ),
-      }))
+    const root = {
+      title: <Link to="/admin">首页</Link>,
     }
-    return [{ title: '管理后台' }]
+    if (trail?.length) {
+      return [
+        root,
+        ...trail.map((n, i) => ({
+          title:
+            i === trail.length - 1 ? (
+              n.title
+            ) : n.path ? (
+              <Link to={n.path}>{n.title}</Link>
+            ) : (
+              n.title
+            ),
+        })),
+      ]
+    }
+    return [root]
   }, [trail])
+
+  const fallbackTitle = location.pathname === '/admin/account/profile' ? '个人中心' : '工作台'
+  const pageTitle = trail?.length ? trail[trail.length - 1].title : fallbackTitle
+  const displayName = getDisplayName(user)
+  const avatarText = getAvatarText(displayName)
+  const avatarUrl = user?.avatar_url || DEFAULT_AVATAR_URL
 
   return (
     <Layout className="admin-layout">
@@ -147,15 +190,16 @@ const AdminLayout = () => {
         collapsible
         collapsed={collapsed}
         onCollapse={setCollapsed}
-        width={220}
-        theme="light"
+        width={180}
+        theme="dark"
         trigger={null}
       >
         <div
           className={`admin-sider-logo${collapsed ? ' admin-sider-logo-collapsed' : ''}`}
-          title="Achievers 管理后台"
+          title="Ant Design Pro"
         >
-          {collapsed ? 'A' : 'Achievers 后台'}
+          <span className="admin-sider-logo-mark" />
+          {collapsed ? null : <span>Ant Design Pro</span>}
         </div>
         <Spin spinning={navLoading}>
           {navLoading ? (
@@ -165,6 +209,7 @@ const AdminLayout = () => {
               <Empty
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
                 description="暂无导航数据。请在后端 Django Admin（导航菜单项）配置，并执行 seed 命令初始化。"
+                styles={{ description: { color: token.colorTextSecondary } }}
               />
               <Button type="link" block onClick={() => void loadNavMenu()}>
                 重新加载
@@ -174,6 +219,7 @@ const AdminLayout = () => {
             <Menu
               key={menuInstanceKey}
               mode="inline"
+              theme="dark"
               selectedKeys={selectedKeys}
               defaultOpenKeys={defaultOpenKeys}
               items={menuItems}
@@ -184,7 +230,9 @@ const AdminLayout = () => {
         </Spin>
       </Sider>
       <Layout>
-        <Header className="admin-header" style={{ height: 64, lineHeight: '64px' }}>
+        <Header
+          className="admin-header"
+        >
           <div className="admin-header-left">
             <span
               className="admin-header-trigger"
@@ -201,9 +249,10 @@ const AdminLayout = () => {
             >
               {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             </span>
-            <Breadcrumb items={breadcrumbItems} />
           </div>
-          <Space size="middle">
+          <Space size="middle" align="center" className="admin-header-actions">
+            <SearchOutlined />
+            <BellOutlined />
             <Dropdown
               menu={{ items: userMenuItems, onClick: onUserMenuClick }}
               placement="bottomRight"
@@ -212,21 +261,37 @@ const AdminLayout = () => {
               <Space style={{ cursor: 'pointer' }}>
                 <Avatar
                   size="small"
-                  icon={<UserOutlined />}
+                  src={avatarUrl}
+                  icon={avatarUrl || avatarText ? undefined : <UserOutlined />}
                   style={{ backgroundColor: token.colorPrimary }}
-                />
-                <Typography.Text>账户</Typography.Text>
+                >
+                  {avatarUrl ? null : avatarText}
+                </Avatar>
+                <Typography.Text className="admin-header-username">
+                  {displayName}
+                </Typography.Text>
               </Space>
             </Dropdown>
+            <GlobalOutlined />
           </Space>
         </Header>
-        <Content style={{ background: token.colorBgLayout }}>
+        <Content>
           <div className="admin-content-wrap">
+            <div className="admin-page-header">
+              <Breadcrumb items={breadcrumbItems} />
+              <Typography.Title level={4} style={{ margin: '12px 0 0' }}>
+                {pageTitle}
+              </Typography.Title>
+            </div>
             <Outlet />
           </div>
         </Content>
         <Footer className="admin-footer">
-          Achievers Automation · 后台管理 © {new Date().getFullYear()}
+          <Space split={<span>·</span>}>
+            <span>Ant Design Pro</span>
+            <span>Ant Design</span>
+          </Space>
+          <div>Copyright © 2026 Achievers Automation</div>
         </Footer>
       </Layout>
     </Layout>

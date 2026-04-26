@@ -66,8 +66,15 @@ INSTALLED_APPS = [
     'company',
     'users',
     'menus',
+    'regions',
     'api',
 ]
+
+# 自定义用户模型（需在首次 migrate 前设置；见 users 应用文档）
+AUTH_USER_MODEL = 'users.UserInfo'
+
+# 账户锁定：自 lockout_started_at 起多久内禁止登录（可为 datetime.timedelta 或秒数 int）
+USER_LOCKOUT_DURATION = timedelta(minutes=30)
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',   # 必须放在最前面

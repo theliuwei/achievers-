@@ -1,14 +1,14 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-User = get_user_model()
+UserInfo = get_user_model()
 
 
 class PendingRegistrationSerializer(serializers.ModelSerializer):
     """待审批注册用户列表。"""
 
     class Meta:
-        model = User
+        model = UserInfo
         fields = (
             'id',
             'username',

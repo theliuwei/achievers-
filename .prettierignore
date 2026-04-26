@@ -1,0 +1,15 @@
+node_modules
+dist
+build
+coverage
+.vite
+.venv
+venv
+__pycache__
+*.pyc
+*.pyo
+*.sqlite3
+*.log
+frontend/pnpm-lock.yaml
+backend/media
+backend/staticfiles

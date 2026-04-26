@@ -1,0 +1,26 @@
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+extend-exclude = [
+  "__pycache__",
+  ".venv",
+  "venv",
+  "migrations",
+]
+
+[tool.ruff.lint]
+select = [
+  "E",
+  "F",
+  "I",
+  "UP",
+  "B",
+]
+ignore = [
+  "E501",
+]
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+line-ending = "lf"

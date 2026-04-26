@@ -1,24 +1,43 @@
+from pathlib import Path
+from uuid import uuid4
+
+from django.core.files.storage import default_storage
 from django.contrib.auth import get_user_model
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
-from rest_framework import status, viewsets
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .models import Permission, Role
+from core.viewsets import SoftDeleteModelViewSet
+
+from .filters import (
+    PendingRegistrationFilter,
+    RoleFilter,
+    TenantFilter,
+    TenantMembershipFilter,
+    UserInfoFilter,
+)
+from .models import MembershipStatus, Permission, Role, Tenant, TenantMembership, UserKind
 from .serializers import (
     MeSerializer,
+    MePasswordChangeSerializer,
+    MeUpdateSerializer,
     PermissionSerializer,
     RBACTokenObtainPairSerializer,
     RoleSerializer,
+    TenantMembershipSerializer,
+    TenantSerializer,
     UserRegisterSerializer,
     UserSerializer,
 )
 from .serializers_pending import PendingRegistrationSerializer
 
-User = get_user_model()
+UserInfo = get_user_model()
 
 
 @extend_schema(tags=['用户 / RBAC'])
@@ -28,6 +47,50 @@ class MeView(APIView):
     def get(self, request):
         serializer = MeSerializer(request.user, context={'request': request})
         return Response(serializer.data)
+
+    def patch(self, request):
+        serializer = MeUpdateSerializer(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(MeSerializer(request.user, context={'request': request}).data)
+
+
+@extend_schema(tags=['用户 / RBAC'])
+class MeAvatarUploadView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser]
+
+    def post(self, request):
+        avatar = request.FILES.get('avatar')
+        if avatar is None:
+            return Response({'detail': '请上传头像文件。'}, status=status.HTTP_400_BAD_REQUEST)
+        if avatar.size > 2 * 1024 * 1024:
+            return Response({'detail': '头像文件不能超过 2MB。'}, status=status.HTTP_400_BAD_REQUEST)
+        if not str(getattr(avatar, 'content_type', '')).startswith('image/'):
+            return Response({'detail': '头像必须是图片文件。'}, status=status.HTTP_400_BAD_REQUEST)
+
+        suffix = Path(avatar.name).suffix.lower()
+        if suffix not in {'.jpg', '.jpeg', '.png', '.gif', '.webp'}:
+            suffix = '.png'
+        filename = f'avatars/user_{request.user.id}_{uuid4().hex}{suffix}'
+        saved_path = default_storage.save(filename, avatar)
+        avatar_url = request.build_absolute_uri(default_storage.url(saved_path))
+
+        request.user.avatar_url = avatar_url
+        request.user.save(update_fields=['avatar_url', 'updated_at'])
+        serializer = MeSerializer(request.user, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=['用户 / RBAC'])
+class MePasswordChangeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = MePasswordChangeSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({'detail': '密码已更新，请重新登录。'}, status=status.HTTP_200_OK)
 
 
 @extend_schema(tags=['认证'])
@@ -64,22 +127,56 @@ class PermissionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Permission.objects.all()
     serializer_class = PermissionSerializer
     permission_classes = [IsAuthenticated, IsAdminUser]
+    pagination_class = None
 
 
 @extend_schema(tags=['用户 / RBAC'])
-class RoleViewSet(viewsets.ModelViewSet):
+class RoleViewSet(SoftDeleteModelViewSet):
     queryset = Role.objects.prefetch_related('permissions').all()
     serializer_class = RoleSerializer
     permission_classes = [IsAuthenticated, IsAdminUser]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_class = RoleFilter
+    search_fields = ['code', 'name', 'description']
 
 
 @extend_schema(tags=['用户 / RBAC'])
-class UserViewSet(viewsets.ModelViewSet):
-    """系统用户与角色绑定（通过 UserProfile）。"""
+class UserViewSet(SoftDeleteModelViewSet):
+    """
+    系统用户与角色：平台方走 UserProfile；企业方走 default_tenant 下 TenantMembership。
+    """
 
-    queryset = User.objects.all().order_by('id')
+    queryset = UserInfo.objects.all().order_by('id')
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated, IsAdminUser]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_class = UserInfoFilter
+    search_fields = ['username', 'email', 'first_name', 'last_name', 'phone']
+
+
+@extend_schema(tags=['用户 / RBAC'])
+class TenantViewSet(SoftDeleteModelViewSet):
+    queryset = Tenant.objects.all().order_by('-id')
+    serializer_class = TenantSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_class = TenantFilter
+    search_fields = ['name', 'code']
+
+
+@extend_schema(tags=['用户 / RBAC'])
+class TenantMembershipViewSet(SoftDeleteModelViewSet):
+    queryset = (
+        TenantMembership.objects.select_related('user', 'tenant', 'invited_by')
+        .prefetch_related('roles')
+        .all()
+        .order_by('tenant_id', 'user_id')
+    )
+    serializer_class = TenantMembershipSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_class = TenantMembershipFilter
+    search_fields = ['user__username', 'user__email', 'tenant__name', 'tenant__code', 'title']
 
 
 @extend_schema(tags=['用户 / RBAC'])
@@ -88,10 +185,13 @@ class PendingRegistrationViewSet(viewsets.ReadOnlyModelViewSet):
 
     serializer_class = PendingRegistrationSerializer
     permission_classes = [IsAuthenticated, IsAdminUser]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_class = PendingRegistrationFilter
+    search_fields = ['username', 'email', 'first_name', 'last_name']
 
     def get_queryset(self):
         return (
-            User.objects.filter(
+            UserInfo.objects.filter(
                 is_active=False,
                 rbac_profile__pending_approval=True,
             )
@@ -109,7 +209,19 @@ class PendingRegistrationViewSet(viewsets.ReadOnlyModelViewSet):
         profile.pending_approval = False
         profile.save(update_fields=['pending_approval'])
         viewer = Role.objects.filter(code='viewer', is_active=True).first()
-        if viewer:
+        target_tenant = user.default_tenant or Tenant.objects.filter(is_active=True).order_by('id').first()
+        if user.user_kind == UserKind.TENANT and target_tenant:
+            if not user.default_tenant_id:
+                user.default_tenant = target_tenant
+                user.save(update_fields=['default_tenant'])
+            m, _ = TenantMembership.objects.get_or_create(
+                user=user,
+                tenant=target_tenant,
+                defaults={'status': MembershipStatus.ACTIVE},
+            )
+            if viewer and not m.roles.filter(pk=viewer.pk).exists():
+                m.roles.add(viewer)
+        elif viewer:
             profile.roles.add(viewer)
         return Response(status=status.HTTP_200_OK)
 

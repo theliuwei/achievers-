@@ -38,6 +38,7 @@ class NavMenuItem(BaseModel):
     is_active = models.BooleanField('启用', default=True)
 
     class Meta:
+        db_table = 'NavMenuItem'
         ordering = ['sort_order', 'id']
         verbose_name = '导航菜单项'
         verbose_name_plural = '导航菜单项'

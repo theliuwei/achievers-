@@ -1,5 +1,5 @@
-import { parseApiError } from './errors'
-import { apiFetch } from './http'
+import { createEntityApi, type PageResult } from '../components/admin-table'
+import { del, get, patch, post } from './http'
 
 export type NavMenuItemRow = {
   id: number
@@ -12,15 +12,39 @@ export type NavMenuItemRow = {
   is_active: boolean
 }
 
-export const fetchNavMenuItems = async (): Promise<NavMenuItemRow[]> => {
-  const res = await apiFetch('/api/v1/nav-menu-items/')
-  const data: unknown = await res.json().catch(() => ({}))
-  if (!res.ok) {
-    throw new Error(parseApiError(data))
-  }
+export type NavMenuItemPayload = Omit<NavMenuItemRow, 'id'>
+
+export const navMenuItemApi = createEntityApi<NavMenuItemRow, NavMenuItemPayload>(
+  '/api/v1/nav-menu-items/',
+)
+
+export const fetchNavMenuItems = async (
+  params: Record<string, unknown> = {},
+): Promise<PageResult<NavMenuItemRow>> => {
+  const { current, pageSize, ...rest } = params
+  const data = await get<NavMenuItemRow[] | { count: number; results: NavMenuItemRow[] }>(
+    '/api/v1/nav-menu-items/',
+    {
+      params: {
+        ...rest,
+        page: current,
+        page_size: pageSize,
+      },
+    },
+  )
   if (Array.isArray(data)) {
-    return data
+    return { data, total: data.length }
   }
-  const paged = data as { results?: NavMenuItemRow[] }
-  return paged.results ?? []
+  return { data: data.results ?? [], total: data.count ?? 0 }
 }
+
+export const createNavMenuItem = (payload: NavMenuItemPayload): Promise<NavMenuItemRow> =>
+  post('/api/v1/nav-menu-items/', payload)
+
+export const updateNavMenuItem = (
+  id: number,
+  payload: NavMenuItemPayload,
+): Promise<NavMenuItemRow> => patch(`/api/v1/nav-menu-items/${id}/`, payload)
+
+export const deleteNavMenuItem = (id: number): Promise<void> =>
+  del(`/api/v1/nav-menu-items/${id}/`)

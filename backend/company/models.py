@@ -85,6 +85,7 @@ class CompanyAbout(BaseModel):
     )
 
     class Meta:
+        db_table = 'CompanyAbout'
         verbose_name = '关于我们'
         verbose_name_plural = '关于我们'
 
@@ -124,6 +125,7 @@ class CompanyContact(BaseModel):
     )
 
     class Meta:
+        db_table = 'CompanyContact'
         verbose_name = '联系我们（页头信息）'
         verbose_name_plural = '联系我们（页头信息）'
 
@@ -150,6 +152,7 @@ class ContactPerson(BaseModel):
     is_active = models.BooleanField('显示', default=True)
 
     class Meta:
+        db_table = 'ContactPerson'
         ordering = ['contact_page', 'sort_order', 'id']
         verbose_name = '联系人'
         verbose_name_plural = '联系人'

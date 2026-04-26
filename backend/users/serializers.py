@@ -1,10 +1,19 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, password_validation
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import Permission, Role, UserProfile
+from .models import (
+    MembershipStatus,
+    Permission,
+    Role,
+    Tenant,
+    TenantMembership,
+    UserKind,
+    UserProfile,
+    resolve_tenant_for_rbac,
+)
 
-User = get_user_model()
+UserInfo = get_user_model()
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
@@ -14,7 +23,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     password_confirm = serializers.CharField(write_only=True, min_length=8, allow_blank=False)
 
     class Meta:
-        model = User
+        model = UserInfo
         fields = (
             'username',
             'email',
@@ -28,7 +37,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         value = (value or '').strip()
         if not value:
             raise serializers.ValidationError('请填写用户名')
-        if User.objects.filter(username=value).exists():
+        if UserInfo.objects.filter(username=value).exists():
             raise serializers.ValidationError('该用户名已被使用')
         return value
 
@@ -36,7 +45,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         value = (value or '').strip()
         if not value:
             raise serializers.ValidationError('请填写邮箱')
-        if User.objects.filter(email__iexact=value).exists():
+        if UserInfo.objects.filter(email__iexact=value).exists():
             raise serializers.ValidationError('该邮箱已被注册')
         return value
 
@@ -49,7 +58,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         validated_data.pop('password_confirm')
         password = validated_data.pop('password')
         validated_data['email'] = validated_data['email'].strip()
-        return User.objects.create_user(
+        return UserInfo.objects.create_user(
             password=password, is_active=False, **validated_data
         )
 
@@ -71,6 +80,8 @@ class RoleSerializer(serializers.ModelSerializer):
         model = Role
         fields = (
             'id',
+            'created_at',
+            'updated_at',
             'code',
             'name',
             'description',
@@ -78,6 +89,7 @@ class RoleSerializer(serializers.ModelSerializer):
             'is_system',
             'permissions',
         )
+        read_only_fields = ('id', 'created_at', 'updated_at')
 
 
 class RoleListSerializer(serializers.ModelSerializer):
@@ -86,6 +98,62 @@ class RoleListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role
         fields = ('id', 'code', 'name', 'is_active', 'is_system')
+
+
+class TenantSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tenant
+        fields = (
+            'id',
+            'created_at',
+            'updated_at',
+            'name',
+            'code',
+            'is_active',
+            'subscription_expires_at',
+        )
+        read_only_fields = ('id', 'created_at', 'updated_at')
+
+
+class TenantMembershipSerializer(serializers.ModelSerializer):
+    roles = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Role.objects.all(),
+        required=False,
+    )
+
+    class Meta:
+        model = TenantMembership
+        fields = (
+            'id',
+            'created_at',
+            'updated_at',
+            'user',
+            'tenant',
+            'status',
+            'title',
+            'invited_by',
+            'roles',
+        )
+        read_only_fields = ('id', 'created_at', 'updated_at')
+
+
+def _set_user_roles(user, role_ids) -> None:
+    if role_ids is None:
+        return
+    if getattr(user, 'user_kind', None) == UserKind.PLATFORM:
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        profile.roles.set(role_ids)
+        return
+    tenant = user.default_tenant
+    if not tenant:
+        return
+    m, _ = TenantMembership.objects.get_or_create(
+        user=user,
+        tenant=tenant,
+        defaults={'status': MembershipStatus.ACTIVE},
+    )
+    m.roles.set(role_ids)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -97,11 +165,19 @@ class UserSerializer(serializers.ModelSerializer):
         write_only=True,
     )
     roles = serializers.SerializerMethodField()
+    user_kind = serializers.ChoiceField(choices=UserKind.choices, required=False, default=UserKind.TENANT)
+    default_tenant = serializers.PrimaryKeyRelatedField(
+        queryset=Tenant.objects.filter(is_active=True, is_deleted=False),
+        allow_null=True,
+        required=False,
+    )
 
     class Meta:
-        model = User
+        model = UserInfo
         fields = (
             'id',
+            'created_at',
+            'updated_at',
             'username',
             'email',
             'password',
@@ -110,12 +186,30 @@ class UserSerializer(serializers.ModelSerializer):
             'is_active',
             'is_staff',
             'is_superuser',
+            'user_kind',
+            'default_tenant',
             'roles',
             'role_ids',
         )
-        read_only_fields = ('is_superuser',)
+        read_only_fields = ('id', 'created_at', 'updated_at', 'is_superuser')
 
     def get_roles(self, obj):
+        if obj.user_kind == UserKind.TENANT:
+            t = obj.default_tenant
+            if not t:
+                return []
+            m = (
+                TenantMembership.objects.filter(
+                    user=obj,
+                    tenant=t,
+                    is_deleted=False,
+                )
+                .first()
+            )
+            if not m:
+                return []
+            qs = m.roles.filter(is_active=True, is_deleted=False)
+            return RoleListSerializer(qs, many=True).data
         try:
             qs = obj.rbac_profile.roles.filter(is_active=True)
             return RoleListSerializer(qs, many=True).data
@@ -127,10 +221,8 @@ class UserSerializer(serializers.ModelSerializer):
         password = validated_data.pop('password', None)
         if not password:
             raise serializers.ValidationError({'password': '创建用户时必须提供密码'})
-        user = User.objects.create_user(password=password, **validated_data)
-        if role_ids is not None:
-            profile, _ = UserProfile.objects.get_or_create(user=user)
-            profile.roles.set(role_ids)
+        user = UserInfo.objects.create_user(password=password, **validated_data)
+        _set_user_roles(user, role_ids)
         return user
 
     def update(self, instance, validated_data):
@@ -140,32 +232,87 @@ class UserSerializer(serializers.ModelSerializer):
         if password:
             user.set_password(password)
             user.save(update_fields=['password'])
-        if role_ids is not None:
-            profile, _ = UserProfile.objects.get_or_create(user=user)
-            profile.roles.set(role_ids)
+        _set_user_roles(user, role_ids)
         return user
+
+
+class _MeTenantSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tenant
+        fields = ('id', 'code', 'name', 'is_active')
 
 
 class MeSerializer(serializers.ModelSerializer):
     roles = serializers.SerializerMethodField()
     permission_codes = serializers.SerializerMethodField()
+    memberships = serializers.SerializerMethodField()
+    default_tenant = _MeTenantSerializer(read_only=True)
 
     class Meta:
-        model = User
+        model = UserInfo
         fields = (
             'id',
             'username',
             'email',
             'first_name',
             'last_name',
+            'avatar_url',
+            'gender',
+            'phone',
             'is_staff',
             'is_superuser',
+            'user_kind',
+            'default_tenant',
+            'memberships',
             'roles',
             'permission_codes',
         )
         read_only_fields = fields
 
+    def get_memberships(self, obj):
+        if obj.user_kind != UserKind.TENANT:
+            return []
+        ms = (
+            obj.tenant_memberships.filter(is_deleted=False)
+            .select_related('tenant')
+            .prefetch_related('roles', 'roles__permissions')
+            .order_by('tenant_id', 'id')
+        )
+        out: list[dict] = []
+        for m in ms:
+            out.append(
+                {
+                    'id': m.id,
+                    'status': m.status,
+                    'title': m.title,
+                    'tenant': _MeTenantSerializer(m.tenant).data,
+                    'roles': RoleListSerializer(
+                        m.roles.filter(is_active=True, is_deleted=False), many=True
+                    ).data,
+                }
+            )
+        return out
+
     def get_roles(self, obj):
+        if obj.is_superuser:
+            return []
+        if obj.user_kind == UserKind.TENANT:
+            req = self.context.get('request')
+            t = resolve_tenant_for_rbac(obj, req)
+            if not t:
+                return []
+            m = (
+                TenantMembership.objects.filter(
+                    user=obj,
+                    tenant=t,
+                    is_deleted=False,
+                )
+                .first()
+            )
+            if not m:
+                return []
+            qs = m.roles.filter(is_active=True, is_deleted=False)
+            return RoleListSerializer(qs, many=True).data
         try:
             qs = obj.rbac_profile.roles.filter(is_active=True)
             return RoleListSerializer(qs, many=True).data
@@ -175,10 +322,60 @@ class MeSerializer(serializers.ModelSerializer):
     def get_permission_codes(self, obj):
         if obj.is_superuser:
             return ['*']
+        if obj.user_kind == UserKind.TENANT:
+            req = self.context.get('request')
+            t = resolve_tenant_for_rbac(obj, req)
+            if not t:
+                return []
+            m = (
+                TenantMembership.objects.filter(
+                    user=obj,
+                    tenant=t,
+                    is_deleted=False,
+                )
+                .first()
+            )
+            if not m:
+                return []
+            return sorted(m.get_permission_codes())
         try:
             return sorted(obj.rbac_profile.get_permission_codes())
         except UserProfile.DoesNotExist:
             return []
+
+
+class MeUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserInfo
+        fields = (
+            'email',
+            'first_name',
+            'last_name',
+            'avatar_url',
+            'gender',
+            'phone',
+        )
+
+
+class MePasswordChangeSerializer(serializers.Serializer):
+    old_password = serializers.CharField(write_only=True, trim_whitespace=False)
+    new_password = serializers.CharField(write_only=True, trim_whitespace=False, min_length=8)
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError('当前密码不正确。')
+        return value
+
+    def validate_new_password(self, value):
+        password_validation.validate_password(value, self.context['request'].user)
+        return value
+
+    def save(self, **kwargs):
+        user = self.context['request'].user
+        user.set_password(self.validated_data['new_password'])
+        user.save(update_fields=['password'])
+        return user
 
 
 class RBACTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -190,6 +387,38 @@ class RBACTokenObtainPairSerializer(TokenObtainPairSerializer):
         if user.is_superuser:
             token['permissions'] = ['*']
             token['roles'] = ['superuser']
+            return token
+        if getattr(user, 'user_kind', None) == UserKind.TENANT:
+            tenant = getattr(user, 'default_tenant', None)
+            m: TenantMembership | None = None
+            if tenant:
+                m = (
+                    TenantMembership.objects.filter(
+                        user=user,
+                        tenant=tenant,
+                        is_deleted=False,
+                        status=MembershipStatus.ACTIVE,
+                    )
+                    .order_by('id')
+                    .first()
+                )
+            if m is None:
+                m = (
+                    user.tenant_memberships.filter(
+                        is_deleted=False, status=MembershipStatus.ACTIVE
+                    )
+                    .order_by('id')
+                    .first()
+                )
+            if m:
+                token['permissions'] = sorted(m.get_permission_codes())
+                token['roles'] = list(
+                    m.roles.filter(is_active=True, is_deleted=False).values_list('code', flat=True)
+                )
+                token['tenant_id'] = m.tenant_id
+            else:
+                token['permissions'] = []
+                token['roles'] = []
             return token
         try:
             profile = user.rbac_profile

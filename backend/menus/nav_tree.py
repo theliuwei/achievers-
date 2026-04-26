@@ -9,8 +9,10 @@ from users.models import user_has_rbac_permission
 from .models import NavMenuItem
 
 
-def build_nav_tree_for_user(user: AbstractUser) -> list[dict[str, Any]]:
-    """按 RBAC 过滤后返回前端可用的菜单树（含 Ant Menu 的 key）。"""
+def build_nav_tree_for_user(
+    user: AbstractUser, request: object | None = None
+) -> list[dict[str, Any]]:
+    """按 RBAC 过滤后返回前端可用的菜单树（含 Ant Menu 的 key）。request 可传以解析企业上下文。"""
 
     def visit(parent: NavMenuItem | None) -> list[dict[str, Any]]:
         result: list[dict[str, Any]] = []
@@ -19,7 +21,7 @@ def build_nav_tree_for_user(user: AbstractUser) -> list[dict[str, Any]]:
         )
         for item in qs:
             if item.permission_code and not user_has_rbac_permission(
-                user, item.permission_code
+                user, item.permission_code, request
             ):
                 continue
             children = visit(item)

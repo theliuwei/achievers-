@@ -19,8 +19,8 @@ class HasNavMenuItemRBAC(BasePermission):
 
         action = getattr(view, 'action', None)
         if action in ('list', 'retrieve'):
-            return user_has_rbac_permission(user, 'menus.query') or user_has_rbac_permission(
-                user, 'menus.refresh'
+            return user_has_rbac_permission(user, 'menus.query', request) or user_has_rbac_permission(
+                user, 'menus.refresh', request
             )
 
         action_code = {
@@ -31,4 +31,4 @@ class HasNavMenuItemRBAC(BasePermission):
         }.get(action)
         if not action_code:
             return False
-        return user_has_rbac_permission(user, action_code)
+        return user_has_rbac_permission(user, action_code, request)

@@ -4,6 +4,8 @@ from brands.models import Brand
 from company.models import CompanyAbout, CompanyContact, ContactPerson
 from products.models import Product, ProductCategory, ProductImage
 
+from .models import Customer, Inquiry, Quotation, QuotationItem
+
 
 class BrandSerializer(serializers.ModelSerializer):
     class Meta:
@@ -16,25 +18,28 @@ class BrandSerializer(serializers.ModelSerializer):
             'description',
             'website',
             'sort_order',
+            'is_active',
             'created_at',
             'updated_at',
         ]
 
 
 class ProductCategorySerializer(serializers.ModelSerializer):
-    brand = BrandSerializer(read_only=True)
+    brand_detail = BrandSerializer(source='brand', read_only=True)
 
     class Meta:
         model = ProductCategory
         fields = [
             'id',
             'brand',
+            'brand_detail',
             'parent',
             'name',
             'slug',
             'description',
             'external_slug',
             'sort_order',
+            'is_active',
             'created_at',
             'updated_at',
         ]
@@ -47,7 +52,7 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    category = ProductCategorySerializer(read_only=True)
+    category_detail = ProductCategorySerializer(source='category', read_only=True)
     brand = BrandSerializer(source='category.brand', read_only=True)
     images = ProductImageSerializer(many=True, read_only=True)
 
@@ -63,14 +68,101 @@ class ProductSerializer(serializers.ModelSerializer):
             'attributes',
             'origin_country',
             'source_url',
+            'external_id',
             'status',
             'sort_order',
             'category',
+            'category_detail',
             'brand',
             'images',
             'created_at',
             'updated_at',
         ]
+
+
+class CustomerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Customer
+        fields = [
+            'id',
+            'created_at',
+            'updated_at',
+            'tenant',
+            'name',
+            'company_name',
+            'country',
+            'email',
+            'phone',
+            'whatsapp',
+            'source',
+            'level',
+            'notes',
+            'owner',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+class InquirySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Inquiry
+        fields = [
+            'id',
+            'created_at',
+            'updated_at',
+            'tenant',
+            'customer',
+            'subject',
+            'product_name',
+            'message',
+            'country',
+            'source',
+            'status',
+            'assignee',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+class QuotationItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QuotationItem
+        fields = [
+            'id',
+            'created_at',
+            'updated_at',
+            'quotation',
+            'product',
+            'product_name',
+            'sku',
+            'quantity',
+            'unit_price',
+            'total_price',
+            'remark',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+class QuotationSerializer(serializers.ModelSerializer):
+    items = QuotationItemSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Quotation
+        fields = [
+            'id',
+            'created_at',
+            'updated_at',
+            'tenant',
+            'customer',
+            'inquiry',
+            'quote_no',
+            'currency',
+            'total_amount',
+            'trade_term',
+            'status',
+            'valid_until',
+            'owner',
+            'items',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at', 'items']
 
 
 class CompanyAboutSerializer(serializers.ModelSerializer):

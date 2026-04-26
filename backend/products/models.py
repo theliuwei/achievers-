@@ -37,6 +37,7 @@ class ProductCategory(BaseModel):
     )
 
     class Meta:
+        db_table = 'ProductCategory'
         ordering = ['brand', 'sort_order', 'name']
         verbose_name = '产品类目'
         verbose_name_plural = '产品类目'
@@ -105,6 +106,7 @@ class Product(BaseModel):
     sort_order = models.PositiveSmallIntegerField('排序', default=0)
 
     class Meta:
+        db_table = 'Product'
         ordering = ['category', 'sort_order', 'sku', 'name']
         verbose_name = '产品'
         verbose_name_plural = '产品'
@@ -139,6 +141,7 @@ class ProductImage(BaseModel):
     is_primary = models.BooleanField('主图', default=False)
 
     class Meta:
+        db_table = 'ProductImage'
         ordering = ['product', 'sort_order', 'id']
         verbose_name = '产品图片'
         verbose_name_plural = '产品图片'

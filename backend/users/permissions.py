@@ -42,7 +42,7 @@ class HasRBACForViewAction(BasePermission):
         default_deny = getattr(view, 'rbac_default_deny', True)
         if not code:
             return not default_deny
-        return user_has_rbac_permission(user, code)
+        return user_has_rbac_permission(user, code, request)
 
 
 class HasRBACPermission(BasePermission):
@@ -55,7 +55,7 @@ class HasRBACPermission(BasePermission):
         code = getattr(view, 'required_rbac_permission', None)
         if not code:
             return bool(request.user and request.user.is_authenticated)
-        return user_has_rbac_permission(request.user, code)
+        return user_has_rbac_permission(request.user, code, request)
 
 
 class HasRBACPermissionOrReadOnly(BasePermission):
@@ -67,4 +67,4 @@ class HasRBACPermissionOrReadOnly(BasePermission):
         code = getattr(view, 'required_rbac_permission', None)
         if not code:
             return bool(request.user and request.user.is_authenticated)
-        return user_has_rbac_permission(request.user, code)
+        return user_has_rbac_permission(request.user, code, request)

@@ -1,26 +1,12 @@
-import { apiUrl } from './client'
-import { parseApiError } from './errors'
+import { post } from './http'
 
 export type TokenPair = {
   access: string
   refresh: string
 }
 
-const jsonHeaders = {
-  'Content-Type': 'application/json',
-}
-
 export const login = async (username: string, password: string): Promise<TokenPair> => {
-  const res = await fetch(apiUrl('/api/v1/auth/token/'), {
-    method: 'POST',
-    headers: jsonHeaders,
-    body: JSON.stringify({ username, password }),
-  })
-  const data: unknown = await res.json().catch(() => ({}))
-  if (!res.ok) {
-    throw new Error(parseApiError(data))
-  }
-  return data as TokenPair
+  return post<TokenPair>('/api/v1/auth/token/', { username, password })
 }
 
 export type RegisterPayload = {
@@ -39,15 +25,10 @@ export type RegisterSubmitted = {
 }
 
 export const register = async (payload: RegisterPayload): Promise<RegisterSubmitted> => {
-  const res = await fetch(apiUrl('/api/v1/auth/register/'), {
-    method: 'POST',
-    headers: jsonHeaders,
-    body: JSON.stringify(payload),
-  })
-  const data: unknown = await res.json().catch(() => ({}))
-  if (!res.ok) {
-    throw new Error(parseApiError(data))
-  }
+  const data = await post<Partial<RegisterSubmitted>, RegisterPayload>(
+    '/api/v1/auth/register/',
+    payload,
+  )
   const d = data as { detail?: string; username?: string }
   return {
     detail: d.detail ?? '注册申请已提交',

@@ -1,5 +1,76 @@
+/* 主题主色由 AppThemeProvider 同步到 :root 的 --app-color-primary，供非 Ant 样式（如纯 CSS 悬停色）复用。 */
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/inter/InterVariable.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/inter/InterVariable-Italic.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Source Han Sans SC';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/fonts/source-han-sans-sc/SourceHanSansSC-Light.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Source Han Sans SC';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/source-han-sans-sc/SourceHanSansSC-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Source Han Sans SC';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/source-han-sans-sc/SourceHanSansSC-Medium.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Source Han Sans SC';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/source-han-sans-sc/SourceHanSansSC-Bold.woff2') format('woff2');
+}
+
+:root {
+  font-family:
+    'Inter',
+    'Source Han Sans SC',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    'PingFang SC',
+    'Microsoft YaHei',
+    sans-serif;
+}
+
 body {
   margin: 0;
+  font-family:
+    'Inter',
+    'Source Han Sans SC',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    'PingFang SC',
+    'Microsoft YaHei',
+    sans-serif;
 }
 
 #root {

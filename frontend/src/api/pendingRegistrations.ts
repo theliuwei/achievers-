@@ -1,5 +1,5 @@
-import { parseApiError } from './errors'
-import { apiFetch } from './http'
+import { get, post } from './http'
+import type { PageResult } from '../components/admin-table'
 
 export type PendingUser = {
   id: number
@@ -10,35 +10,31 @@ export type PendingUser = {
   date_joined: string
 }
 
-export const fetchPendingRegistrations = async (): Promise<PendingUser[]> => {
-  const res = await apiFetch('/api/v1/pending-registrations/')
-  const data: unknown = await res.json().catch(() => ({}))
-  if (!res.ok) {
-    throw new Error(parseApiError(data))
-  }
+export const fetchPendingRegistrations = async (
+  params: Record<string, unknown> = {},
+): Promise<PageResult<PendingUser>> => {
+  const { current, pageSize, ...rest } = params
+  const data = await get<PendingUser[] | { count?: number; results?: PendingUser[] }>(
+    '/api/v1/pending-registrations/',
+    {
+      params: {
+        ...rest,
+        page: current,
+        page_size: pageSize,
+      },
+    },
+  )
   if (Array.isArray(data)) {
-    return data
+    return { data, total: data.length }
   }
-  const paged = data as { results?: PendingUser[] }
-  return paged.results ?? []
+  const rows = data.results ?? []
+  return { data: rows, total: data.count ?? rows.length }
 }
 
 export const approveRegistration = async (id: number): Promise<void> => {
-  const res = await apiFetch(`/api/v1/pending-registrations/${id}/approve/`, {
-    method: 'POST',
-  })
-  if (!res.ok) {
-    const data: unknown = await res.json().catch(() => ({}))
-    throw new Error(parseApiError(data))
-  }
+  await post(`/api/v1/pending-registrations/${id}/approve/`)
 }
 
 export const rejectRegistration = async (id: number): Promise<void> => {
-  const res = await apiFetch(`/api/v1/pending-registrations/${id}/reject/`, {
-    method: 'POST',
-  })
-  if (!res.ok) {
-    const data: unknown = await res.json().catch(() => ({}))
-    throw new Error(parseApiError(data))
-  }
+  await post(`/api/v1/pending-registrations/${id}/reject/`)
 }

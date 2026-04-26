@@ -20,6 +20,7 @@ class Brand(BaseModel):
     is_active = models.BooleanField('启用', default=True)
 
     class Meta:
+        db_table = 'Brand'
         ordering = ['sort_order', 'name']
         verbose_name = '品牌'
         verbose_name_plural = '品牌'

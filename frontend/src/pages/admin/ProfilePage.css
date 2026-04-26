@@ -1,0 +1,87 @@
+.profile-page-card {
+  min-height: 560px;
+}
+
+.profile-page {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 32px;
+}
+
+.profile-page-menu {
+  border-inline-end: 1px solid #f0f0f0;
+}
+
+.profile-page-content {
+  display: grid;
+  grid-template-columns: minmax(320px, 520px) 220px;
+  gap: 64px;
+  align-items: start;
+}
+
+.profile-avatar-panel {
+  padding-top: 40px;
+  text-align: center;
+}
+
+.profile-avatar-title {
+  margin-bottom: 12px;
+  color: rgb(0 0 0 / 88%);
+}
+
+.profile-avatar {
+  margin-bottom: 16px;
+  background: var(--app-color-primary);
+}
+
+.profile-security-list {
+  max-width: 100%;
+}
+
+.profile-security-list .ant-list-item {
+  padding: 18px 0;
+}
+
+.profile-security-list .ant-list-item-meta-title {
+  margin-bottom: 6px;
+}
+
+.profile-security-list .ant-tag {
+  margin-left: 8px;
+}
+
+.profile-binding-icon {
+  font-size: 22px;
+}
+
+.profile-binding-taobao {
+  color: #ff6a00;
+}
+
+.profile-binding-alipay {
+  color: #1677ff;
+}
+
+.profile-binding-dingtalk {
+  color: #1785ff;
+}
+
+@media (max-width: 900px) {
+  .profile-page {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-page-menu {
+    border-inline-end: 0;
+  }
+
+  .profile-page-content {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .profile-avatar-panel {
+    padding-top: 0;
+    text-align: left;
+  }
+}

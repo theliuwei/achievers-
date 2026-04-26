@@ -7,6 +7,80 @@ def _perm(code: str, name: str, desc: str = '') -> tuple[str, str, str]:
     return (code, name, desc)
 
 
+TENANT_ROLE_PERMISSIONS: dict[str, dict[str, object]] = {
+    'tenant_admin': {
+        'name': '合作公司管理员',
+        'description': '合作公司侧管理员，可查看并维护公司、成员、产品、询盘、客户和报价模块。',
+        'permissions': {
+            'tenants.view',
+            'tenants.create',
+            'tenants.update',
+            'members.view',
+            'members.create',
+            'members.update',
+            'members.delete',
+            'products.view',
+            'products.create',
+            'products.update',
+            'products.delete',
+            'products.upload',
+            'products.download',
+            'inquiries.view',
+            'inquiries.create',
+            'inquiries.update',
+            'inquiries.delete',
+            'customers.view',
+            'customers.create',
+            'customers.update',
+            'customers.delete',
+            'quotations.view',
+            'quotations.create',
+            'quotations.update',
+            'quotations.delete',
+            'quotations.download',
+        },
+    },
+    'tenant_sales': {
+        'name': '外贸业务员',
+        'description': '负责询盘、客户和报价，可查看产品资料。',
+        'permissions': {
+            'products.view',
+            'inquiries.view',
+            'inquiries.create',
+            'inquiries.update',
+            'customers.view',
+            'customers.create',
+            'customers.update',
+            'quotations.view',
+            'quotations.create',
+            'quotations.update',
+            'quotations.download',
+        },
+    },
+    'tenant_product_manager': {
+        'name': '产品维护员',
+        'description': '负责产品资料维护，仅看到产品管理模块。',
+        'permissions': {
+            'products.view',
+            'products.create',
+            'products.update',
+            'products.upload',
+            'products.download',
+        },
+    },
+    'tenant_viewer': {
+        'name': '合作公司只读',
+        'description': '只能查看产品、询盘、客户和报价，不可修改。',
+        'permissions': {
+            'products.view',
+            'inquiries.view',
+            'customers.view',
+            'quotations.view',
+        },
+    },
+}
+
+
 # 细粒度权限（按钮/接口级）：资源.动作；后台可继续增删改
 DEFAULT_PERMISSIONS: list[tuple[str, str, str]] = [
     # 用户与 RBAC 管理
@@ -25,6 +99,28 @@ DEFAULT_PERMISSIONS: list[tuple[str, str, str]] = [
     _perm('menus.create', '菜单管理-新增', '新增导航菜单项'),
     _perm('menus.update', '菜单管理-修改', '编辑导航菜单项'),
     _perm('menus.delete', '菜单管理-删除', '删除导航菜单项'),
+    # 外贸 SaaS 核心模块
+    _perm('tenants.view', '公司管理-查看', '查看租户/公司资料'),
+    _perm('tenants.create', '公司管理-新增', '新增租户/公司'),
+    _perm('tenants.update', '公司管理-修改', '编辑租户/公司资料、订阅状态'),
+    _perm('tenants.delete', '公司管理-删除', '删除或停用租户/公司'),
+    _perm('members.view', '成员管理-查看', '查看公司成员'),
+    _perm('members.create', '成员管理-新增', '邀请或新增公司成员'),
+    _perm('members.update', '成员管理-修改', '编辑成员资料、角色、状态'),
+    _perm('members.delete', '成员管理-删除', '移除公司成员'),
+    _perm('inquiries.view', '询盘管理-查看', '查看询盘列表、详情'),
+    _perm('inquiries.create', '询盘管理-新增', '新增或导入询盘'),
+    _perm('inquiries.update', '询盘管理-修改', '跟进、分配、更新询盘状态'),
+    _perm('inquiries.delete', '询盘管理-删除', '删除无效询盘'),
+    _perm('customers.view', '客户管理-查看', '查看海外客户资料'),
+    _perm('customers.create', '客户管理-新增', '新增海外客户'),
+    _perm('customers.update', '客户管理-修改', '编辑客户资料、跟进记录'),
+    _perm('customers.delete', '客户管理-删除', '删除客户资料'),
+    _perm('quotations.view', '报价管理-查看', '查看报价单'),
+    _perm('quotations.create', '报价管理-新增', '创建报价单'),
+    _perm('quotations.update', '报价管理-修改', '编辑报价单、报价明细'),
+    _perm('quotations.delete', '报价管理-删除', '删除报价单'),
+    _perm('quotations.download', '报价管理-下载', '导出报价单 PDF/Excel'),
     # 产品（示例：与前端按钮一一对应）
     _perm('products.view', '产品-查看', '列表、详情'),
     _perm('products.create', '产品-新增', '创建'),
@@ -117,8 +213,25 @@ class Command(BaseCommand):
         }
         viewer_role.permissions.set(Permission.objects.filter(code__in=viewer_codes))
 
+        for role_code, config in TENANT_ROLE_PERMISSIONS.items():
+            role, _ = Role.objects.update_or_create(
+                code=role_code,
+                defaults={
+                    'name': str(config['name']),
+                    'description': str(config['description']),
+                    'is_active': True,
+                    'is_system': True,
+                },
+            )
+            role.permissions.set(
+                Permission.objects.filter(code__in=config['permissions'])
+            )
+            self.stdout.write(self.style.SUCCESS(f'角色 {role_code} 已更新'))
+
         self.stdout.write(
             self.style.SUCCESS(
-                f'完成。新建权限 {created_p} 条；角色 administrator / content_editor / viewer 已更新。'
+                '完成。新建权限 '
+                f'{created_p} 条；角色 administrator / content_editor / viewer '
+                '及合作公司测试角色已更新。'
             )
         )

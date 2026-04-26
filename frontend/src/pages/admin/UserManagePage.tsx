@@ -1,308 +1,182 @@
-import { useCallback, useMemo, useState } from 'react'
-import { DownloadOutlined, UploadOutlined } from '@ant-design/icons'
-import { App, Button, Modal, Space, Tag, Typography } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
-import type { UploadFile } from 'antd/es/upload'
-import { Link } from 'react-router-dom'
-import { apiUrl } from '../../api/client'
-import { ActionModal, ProTable, SearchForm } from '../../components/pro'
-import type { ProTableRequestParams } from '../../components/pro/types'
-import { ExportExcel, ImportExcel } from '../../components/excel'
-import { ListPageToolbar } from '../../components/list-page'
-import {
-  ACTION_ICON_LABELS,
-  AddIcon,
-  DeleteIcon,
-  EditIcon,
-  RefreshIcon,
-} from '../../components/action-icons'
-import {
-  mockCreateUser,
-  mockDeleteUsers,
-  mockExportUsers,
-  mockFetchUserPage,
-  mockImportUsers,
-  mockUpdateUser,
-} from './userManage/mockUsersApi'
-import { ROLE_OPTIONS, userFormModalSchema, userSearchSchema } from './userManage/schemas'
-import type { UserFormValues, UserListSearchParams, UserRow } from './userManage/types'
+import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { Space, Tag } from 'antd'
+import { AdminTablePage, type EntityFieldConfig } from '../../components/admin-table'
+import { fetchRoles } from '../../api/roles'
+import { fetchUsers, userApi, type UserPayload, type UserRow } from '../../api/users'
 
-const { Title, Text } = Typography
+type UserFormValues = UserPayload & Record<string, unknown>
 
-function pickSearchParams(values: Record<string, unknown>): UserListSearchParams {
-  const fileList = values.attachment as UploadFile[] | undefined
-  const first = fileList?.[0]
-  return {
-    keyword: typeof values.keyword === 'string' ? values.keyword.trim() || undefined : undefined,
-    role: typeof values.role === 'string' ? values.role : undefined,
-    onlyActive: Boolean(values.onlyActive),
-    attachmentHint: first?.name,
-  }
-}
+const activeOptions = [
+  { label: '启用', value: true },
+  { label: '停用', value: false },
+]
 
-function rowToFormValues(row: UserRow): UserFormValues {
-  return {
-    id: row.id,
-    username: row.username,
-    nickname: row.nickname,
-    email: row.email,
-    role: row.role,
-    active: row.status === 'active',
-  }
-}
+const staffOptions = [
+  { label: '是', value: true },
+  { label: '否', value: false },
+]
+
+const userKindOptions = [
+  { label: '平台运营方', value: 'platform' },
+  { label: '企业用户', value: 'tenant' },
+]
 
 const UserManagePage = () => {
-  const { modal, message } = App.useApp()
-  const [searchExpanded, setSearchExpanded] = useState(false)
-  const [searchParams, setSearchParams] = useState<UserListSearchParams>({})
-  const [listVersion, setListVersion] = useState(0)
-  const [userModalOpen, setUserModalOpen] = useState(false)
-  const [importModalOpen, setImportModalOpen] = useState(false)
-  const [editing, setEditing] = useState<UserRow | null>(null)
-  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
-  const [selectedRows, setSelectedRows] = useState<UserRow[]>([])
+  const { data: rolePage } = useQuery({
+    queryKey: ['roles', 'options'],
+    queryFn: () => fetchRoles({ page: 1, page_size: 200 }),
+  })
 
-  const tableSearchKey = useMemo(
-    () => ({ ...searchParams, __v: listVersion }),
-    [searchParams, listVersion],
+  const roleOptions = useMemo(
+    () =>
+      (rolePage?.data ?? []).map((role) => ({
+        label: `${role.name}（${role.code}）`,
+        value: role.id,
+      })),
+    [rolePage],
   )
 
-  const loadTable = useCallback(
-    async (params: ProTableRequestParams<UserRow>) => mockFetchUserPage(searchParams, params),
-    [searchParams],
-  )
-
-  const exportParams = useMemo(
-    () => ({ ...searchParams } as Record<string, unknown>),
-    [searchParams],
-  )
-
-  const exportApi = useCallback(
-    async (params: Record<string, unknown>, opts?: { signal?: AbortSignal }) => {
-      return mockExportUsers(params as UserListSearchParams, opts?.signal)
-    },
-    [],
-  )
-
-  const refreshTable = useCallback(() => {
-    setListVersion((v) => v + 1)
-  }, [])
-
-  const handleSearchFinish = useCallback((values: Record<string, unknown>) => {
-    setSearchParams(pickSearchParams(values))
-  }, [])
-
-  const handleSearchReset = useCallback(() => {
-    setSearchParams({})
-  }, [])
-
-  const openCreate = useCallback(() => {
-    setEditing(null)
-    setUserModalOpen(true)
-  }, [])
-
-  const openEdit = useCallback((row: UserRow) => {
-    setEditing(row)
-    setUserModalOpen(true)
-  }, [])
-
-  const closeUserModal = useCallback(() => {
-    setUserModalOpen(false)
-    setEditing(null)
-  }, [])
-
-  const submitUser = useCallback(
-    async (values: UserFormValues) => {
-      if (editing) {
-        await mockUpdateUser({ ...values, id: editing.id })
-      } else {
-        await mockCreateUser(values)
-      }
-      refreshTable()
-      setSelectedRowKeys([])
-      setSelectedRows([])
-    },
-    [editing, refreshTable],
-  )
-
-  const importUploadApi = useCallback(async (file: File) => mockImportUsers(file), [])
-
-  const handleModify = useCallback(() => {
-    const row = selectedRows[0]
-    if (row) {
-      openEdit(row)
-    }
-  }, [openEdit, selectedRows])
-
-  const handleDelete = useCallback(() => {
-    if (selectedRowKeys.length === 0) {
-      return
-    }
-    modal.confirm({
-      title: '确认删除',
-      content: `将删除 ${selectedRowKeys.length} 条用户记录（演示数据）。`,
-      okText: '删除',
-      okType: 'danger',
-      onOk: async () => {
-        await mockDeleteUsers(selectedRowKeys.map(String))
-        message.success('已删除')
-        setSelectedRowKeys([])
-        setSelectedRows([])
-        refreshTable()
-      },
-    })
-  }, [message, modal, refreshTable, selectedRowKeys])
-
-  const columns: ColumnsType<UserRow> = useMemo(
+  const fields = useMemo<EntityFieldConfig<UserRow>[]>(
     () => [
-      { title: '用户名', dataIndex: 'username', width: 120, sorter: true },
-      { title: '昵称', dataIndex: 'nickname', width: 120, sorter: true },
-      { title: '邮箱', dataIndex: 'email', ellipsis: true, sorter: true },
+      { key: 'id', title: 'ID', valueType: 'digit', form: false, search: true, table: { width: 72 } },
       {
+        key: 'username',
+        title: '用户名',
+        valueType: 'text',
+        search: true,
+        form: { rules: [{ required: true, message: '请输入用户名' }], readonlyOnEdit: true },
+        table: { width: 140, sorter: true },
+      },
+      {
+        key: 'email',
+        title: '邮箱',
+        valueType: 'text',
+        search: true,
+        form: { rules: [{ required: true, message: '请输入邮箱' }] },
+        table: { width: 220, ellipsis: true },
+      },
+      {
+        key: 'password',
+        title: '密码',
+        valueType: 'text',
+        table: false,
+        search: false,
+        form: { placeholder: '编辑时留空表示不修改密码' },
+      },
+      { key: 'first_name', title: '名', valueType: 'text', search: true, table: { width: 120 } },
+      { key: 'last_name', title: '姓', valueType: 'text', search: true, table: { width: 120 } },
+      {
+        key: 'user_kind',
+        title: '身份类型',
+        valueType: 'select',
+        options: userKindOptions,
+        search: true,
+        form: { rules: [{ required: true, message: '请选择身份类型' }] },
+        table: {
+          width: 120,
+          render: (_, row) => (
+            <Tag color={row.user_kind === 'platform' ? 'blue' : 'cyan'}>
+              {row.user_kind === 'platform' ? '平台' : '企业'}
+            </Tag>
+          ),
+        },
+      },
+      {
+        key: 'is_active',
+        title: '启用',
+        valueType: 'select',
+        options: activeOptions,
+        search: true,
+        form: { rules: [{ required: true, message: '请选择启用状态' }] },
+        table: {
+          width: 90,
+          render: (_, row) => (
+            <Tag color={row.is_active ? 'green' : 'default'}>{row.is_active ? '启用' : '停用'}</Tag>
+          ),
+        },
+      },
+      {
+        key: 'is_staff',
+        title: '后台登录',
+        valueType: 'select',
+        options: staffOptions,
+        search: true,
+        form: { rules: [{ required: true, message: '请选择后台登录权限' }] },
+        table: {
+          width: 110,
+          render: (_, row) => <Tag color={row.is_staff ? 'blue' : 'default'}>{row.is_staff ? '是' : '否'}</Tag>,
+        },
+      },
+      {
+        key: 'default_tenant',
+        title: '默认公司 ID',
+        valueType: 'digit',
+        search: true,
+        form: false,
+        table: false,
+      },
+      {
+        key: 'role_ids',
         title: '角色',
-        dataIndex: 'role',
-        width: 100,
-        render: (role: string) => ROLE_OPTIONS.find((o) => o.value === role)?.label ?? role,
+        valueType: 'select',
+        options: roleOptions,
+        search: false,
+        table: false,
+        form: { componentProps: { mode: 'multiple', showSearch: true, optionFilterProp: 'label' } },
       },
       {
-        title: '状态',
-        dataIndex: 'status',
-        width: 100,
-        render: (status: UserRow['status']) =>
-          status === 'active' ? <Tag color="green">启用</Tag> : <Tag>停用</Tag>,
+        key: 'roles',
+        title: '角色',
+        search: false,
+        form: false,
+        table: {
+          width: 220,
+          render: (_, row) => (
+            <Space wrap size={[0, 4]}>
+              {row.roles?.length ? row.roles.map((role) => <Tag key={role.id}>{role.name}</Tag>) : <Tag>未绑定</Tag>}
+            </Space>
+          ),
+        },
       },
-      {
-        title: '创建时间',
-        dataIndex: 'createdAt',
-        width: 180,
-        sorter: true,
-        render: (iso: string) => new Date(iso).toLocaleString('zh-CN'),
-      },
+      { key: 'created_at', title: '创建时间', valueType: 'dateTime', form: false, search: false, table: { width: 170 } },
+      { key: 'updated_at', title: '更新时间', valueType: 'dateTime', form: false, search: false, table: { width: 170 } },
     ],
-    [],
+    [roleOptions],
   )
 
   return (
-    <div>
-      <Title level={4} style={{ marginTop: 0 }}>
-        用户管理
-      </Title>
-      <Text type="secondary">
-        右侧工具栏为图标按钮（悬停可见说明）；表格左上方为导入 / 导出。修改与删除依赖表格多选。
-      </Text>
-      <div style={{ marginTop: 8 }}>
-        <Link to={apiUrl('/api/docs/')} target="_blank" rel="noreferrer">
-          打开 Swagger — accounts
-        </Link>
-      </div>
-
-      <ListPageToolbar
-        searchExpanded={searchExpanded}
-        onToggleSearch={() => setSearchExpanded((v) => !v)}
-        searchContent={
-          <SearchForm
-            schema={userSearchSchema}
-            onFinish={handleSearchFinish}
-            onReset={handleSearchReset}
-            initialValues={{ onlyActive: false, attachment: [] }}
-          />
+    <AdminTablePage<UserRow, UserFormValues>
+      listTitle="应用列表"
+      fields={fields}
+      api={{ ...userApi, list: fetchUsers }}
+      rowKey="id"
+      createTitle="新增用户"
+      editTitle="编辑用户"
+      createDefaults={{ is_active: true, is_staff: false, user_kind: 'tenant', role_ids: [] }}
+      recordToFormValues={(record) => ({
+        ...record,
+        role_ids: record.roles.map((role) => role.id),
+      })}
+      transformSubmit={(values, editing) => {
+        const payload: UserPayload = {
+          username: values.username.trim(),
+          email: values.email.trim(),
+          first_name: values.first_name?.trim() ?? '',
+          last_name: values.last_name?.trim() ?? '',
+          is_active: values.is_active,
+          is_staff: values.is_staff,
+          user_kind: values.user_kind,
+          default_tenant: values.default_tenant ?? null,
+          role_ids: values.role_ids ?? [],
         }
-      >
-        <Button
-          type="primary"
-          icon={<AddIcon />}
-          onClick={openCreate}
-          title={ACTION_ICON_LABELS.add}
-          aria-label={ACTION_ICON_LABELS.add}
-        />
-        <Button
-          icon={<EditIcon />}
-          disabled={selectedRows.length !== 1}
-          onClick={handleModify}
-          title={ACTION_ICON_LABELS.edit}
-          aria-label={ACTION_ICON_LABELS.edit}
-        />
-        <Button
-          danger
-          icon={<DeleteIcon />}
-          disabled={selectedRowKeys.length === 0}
-          onClick={handleDelete}
-          title={ACTION_ICON_LABELS.delete}
-          aria-label={ACTION_ICON_LABELS.delete}
-        />
-        <Button
-          icon={<RefreshIcon />}
-          onClick={refreshTable}
-          title={ACTION_ICON_LABELS.refresh}
-          aria-label={ACTION_ICON_LABELS.refresh}
-        />
-      </ListPageToolbar>
-
-      <div style={{ marginBottom: 8 }}>
-        <Space.Compact>
-          <Button
-            icon={<UploadOutlined />}
-            onClick={() => setImportModalOpen(true)}
-          >
-            导入
-          </Button>
-          <ExportExcel
-            api={exportApi}
-            params={exportParams}
-            fileName={`用户列表-${new Date().toISOString().slice(0, 10)}.csv`}
-            buttonProps={{
-              icon: <DownloadOutlined />,
-              type: 'default',
-            }}
-          >
-            导出
-          </ExportExcel>
-        </Space.Compact>
-      </div>
-
-      <ProTable<UserRow>
-        rowKey="id"
-        columns={columns}
-        request={loadTable}
-        searchParams={tableSearchKey}
-        scroll={{ x: 960 }}
-        rowSelection={{
-          selectedRowKeys,
-          onChange: (keys, rows) => {
-            setSelectedRowKeys(keys)
-            setSelectedRows(rows)
-          },
-        }}
-      />
-
-      <ActionModal<UserFormValues>
-        open={userModalOpen}
-        onClose={closeUserModal}
-        title={editing ? '编辑用户' : '新增用户'}
-        schema={userFormModalSchema}
-        initialValues={editing ? rowToFormValues(editing) : undefined}
-        createDefaults={{ active: true, role: 'editor' }}
-        api={submitUser}
-      />
-
-      <Modal
-        title="导入用户（Excel）"
-        open={importModalOpen}
-        onCancel={() => setImportModalOpen(false)}
-        footer={null}
-        destroyOnHidden
-        width={560}
-      >
-        <ImportExcel
-          api={importUploadApi}
-          templateUrl="/templates/users-import-template.csv"
-          onSuccess={() => {
-            setImportModalOpen(false)
-            refreshTable()
-          }}
-        />
-      </Modal>
-    </div>
+        if (!editing || values.password) {
+          payload.password = values.password
+        }
+        return payload
+      }}
+      tableScrollX={1500}
+    />
   )
 }
 

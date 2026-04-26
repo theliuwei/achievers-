@@ -11,10 +11,10 @@ class UsersConfig(AppConfig):
         from django.contrib import admin
         from django.contrib.auth import get_user_model
 
-        from users.admin import UserAdmin
+        from users.admin import UserInfoAdmin
 
         user_model = get_user_model()
         if admin.site.is_registered(user_model):
             admin.site.unregister(user_model)
-        admin.site.register(user_model, UserAdmin)
+        admin.site.register(user_model, UserInfoAdmin)
 
