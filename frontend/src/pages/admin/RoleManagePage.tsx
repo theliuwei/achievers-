@@ -24,6 +24,13 @@ const systemOptions = [
   { label: '否', value: false },
 ]
 
+const dataScopeOptions = [
+  { label: '本人数据', value: 'own' },
+  { label: '部门/下属数据', value: 'department' },
+  { label: '公司全部数据', value: 'tenant' },
+  { label: '平台全部数据', value: 'all' },
+]
+
 const RoleManagePage = () => {
   const { data: permissions = [] } = useQuery({
     queryKey: ['permissions'],
@@ -79,6 +86,20 @@ const RoleManagePage = () => {
         valueType: 'textarea',
         search: true,
         table: { ellipsis: true, width: 240 },
+      },
+      {
+        key: 'data_scope',
+        title: '数据权限',
+        valueType: 'select',
+        options: dataScopeOptions,
+        search: true,
+        form: { rules: [{ required: true, message: '请选择数据权限' }] },
+        table: {
+          width: 140,
+          render: (_, record) => (
+            <Tag>{dataScopeOptions.find((item) => item.value === record.data_scope)?.label}</Tag>
+          ),
+        },
       },
       {
         key: 'permissions',
@@ -177,11 +198,12 @@ const RoleManagePage = () => {
       rowKey="id"
       createTitle="新增角色"
       editTitle="编辑角色"
-      createDefaults={{ is_active: true, is_system: false, permissions: [] }}
+      createDefaults={{ data_scope: 'own', is_active: true, is_system: false, permissions: [] }}
       transformSubmit={(values) => ({
         code: values.code.trim(),
         name: values.name.trim(),
         description: values.description?.trim() ?? '',
+        data_scope: values.data_scope,
         is_active: values.is_active,
         is_system: values.is_system,
         permissions: values.permissions ?? [],

@@ -6,8 +6,20 @@ export interface TenantRow {
   updated_at?: string
   name: string
   code: string
+  address: string
+  contact_name: string
+  contact_phone: string
+  contact_email: string
+  primary_admin: number | null
   is_active: boolean
+  subscription_starts_at: string | null
   subscription_expires_at: string | null
+  max_members: number
+  storage_quota_mb: number
+  storage_used_mb: number
+  locked_reason: string
+  is_subscription_expired?: boolean
+  active_member_count?: number
 }
 
 export interface TenantMembershipRow {
@@ -18,8 +30,22 @@ export interface TenantMembershipRow {
   tenant: number
   status: 'invited' | 'active' | 'suspended'
   title: string
+  department: number | null
+  reports_to: number | null
   invited_by: number | null
   roles: number[]
+}
+
+export interface DepartmentRow {
+  id: number
+  created_at?: string
+  updated_at?: string
+  tenant: number
+  name: string
+  parent: number | null
+  manager: number | null
+  sort_order: number
+  is_active: boolean
 }
 
 export interface ProductRow {
@@ -89,14 +115,19 @@ export interface QuotationRow {
   owner: number | null
 }
 
-export type TenantPayload = Omit<TenantRow, 'id' | 'created_at' | 'updated_at'>
+export type TenantPayload = Omit<
+  TenantRow,
+  'id' | 'created_at' | 'updated_at' | 'is_subscription_expired' | 'active_member_count'
+>
 export type TenantMembershipPayload = Omit<TenantMembershipRow, 'id' | 'created_at' | 'updated_at'>
+export type DepartmentPayload = Omit<DepartmentRow, 'id' | 'created_at' | 'updated_at'>
 export type ProductPayload = Omit<ProductRow, 'id' | 'created_at' | 'updated_at' | 'brand'>
 export type CustomerPayload = Omit<CustomerRow, 'id' | 'created_at' | 'updated_at'>
 export type InquiryPayload = Omit<InquiryRow, 'id' | 'created_at' | 'updated_at'>
 export type QuotationPayload = Omit<QuotationRow, 'id' | 'created_at' | 'updated_at'>
 
 export const tenantApi = createEntityApi<TenantRow, TenantPayload>('/api/v1/tenants/')
+export const departmentApi = createEntityApi<DepartmentRow, DepartmentPayload>('/api/v1/departments/')
 export const tenantMembershipApi = createEntityApi<TenantMembershipRow, TenantMembershipPayload>(
   '/api/v1/tenant-memberships/',
 )

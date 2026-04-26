@@ -96,19 +96,24 @@ export function AdminTablePage<
   }
 
   const submit = async (values: FormValues) => {
-    const payload = transformSubmit ? transformSubmit(values, editing) : values
-    if (editing) {
-      if (!api.update) return false
-      await api.update(editing[rowKey] as Key, payload)
-      message.success('保存成功')
-    } else {
-      if (!api.create) return false
-      await api.create(payload)
-      message.success('新增成功')
+    try {
+      const payload = transformSubmit ? transformSubmit(values, editing) : values
+      if (editing) {
+        if (!api.update) return false
+        await api.update(editing[rowKey] as Key, payload)
+        message.success('保存成功')
+      } else {
+        if (!api.create) return false
+        await api.create(payload)
+        message.success('新增成功')
+      }
+      closeModal()
+      actionRef.current?.reload()
+      return true
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : '提交失败，请稍后重试')
+      return false
     }
-    closeModal()
-    actionRef.current?.reload()
-    return true
   }
 
   const deleteRows = () => {
@@ -121,10 +126,15 @@ export function AdminTablePage<
       okText: '删除',
       okType: 'danger',
       onOk: async () => {
-        await Promise.all(selectedRows.map((row) => api.remove?.(row[rowKey] as Key)))
-        message.success('删除成功')
-        setSelectedRows([])
-        actionRef.current?.reload()
+        try {
+          await Promise.all(selectedRows.map((row) => api.remove?.(row[rowKey] as Key)))
+          message.success('删除成功')
+          setSelectedRows([])
+          actionRef.current?.reload()
+        } catch (error) {
+          message.error(error instanceof Error ? error.message : '删除失败，请稍后重试')
+          throw error
+        }
       },
     })
   }

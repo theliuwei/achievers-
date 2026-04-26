@@ -2,6 +2,7 @@ from drf_spectacular.utils import extend_schema
 import django_filters
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
@@ -11,6 +12,8 @@ from brands.models import Brand
 from company.models import CompanyAbout, CompanyContact
 from core.viewsets import SoftDeleteModelViewSet
 from products.models import Product, ProductCategory
+from users.models import UserKind, filter_queryset_by_data_scope, resolve_membership_for_rbac
+from users.permissions import HasRBACForViewAction
 
 from .filters import ProductCategoryFilter, ProductFilter
 from .models import Customer, Inquiry, Quotation, QuotationItem
@@ -219,37 +222,98 @@ class AdminProductViewSet(SoftDeleteModelViewSet):
     ordering_fields = ['sort_order', 'name', 'id', 'created_at', 'updated_at']
 
 
+class TenantScopedOwnerMixin:
+    owner_field: str | None = None
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return filter_queryset_by_data_scope(qs, self.request.user, self.request, owner_field=self.owner_field)
+
+    def _tenant_save_kwargs(self, serializer):
+        user = self.request.user
+        if user.is_superuser or getattr(user, 'user_kind', None) == UserKind.PLATFORM:
+            return {}
+        membership = resolve_membership_for_rbac(user, self.request)
+        if membership is None:
+            raise PermissionDenied('当前用户没有可用的租户上下文。')
+        kwargs = {'tenant': membership.tenant}
+        if self.owner_field:
+            owner = (
+                serializer.validated_data.get(self.owner_field)
+                or getattr(serializer.instance, self.owner_field, None)
+                or user
+            )
+            accessible_user_ids = membership.get_accessible_user_ids()
+            if accessible_user_ids is not None and owner.id not in accessible_user_ids:
+                raise PermissionDenied('不能把数据分配给当前数据权限范围外的用户。')
+            kwargs[self.owner_field] = owner
+        return kwargs
+
+    def perform_create(self, serializer):
+        serializer.save(**self._tenant_save_kwargs(serializer))
+
+    def perform_update(self, serializer):
+        serializer.save(**self._tenant_save_kwargs(serializer))
+
+
 @extend_schema(tags=['外贸业务'])
-class CustomerViewSet(SoftDeleteModelViewSet):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+class CustomerViewSet(TenantScopedOwnerMixin, SoftDeleteModelViewSet):
+    owner_field = 'owner'
+    permission_classes = [IsAuthenticated, HasRBACForViewAction]
     serializer_class = CustomerSerializer
     queryset = Customer.objects.select_related('tenant', 'owner').all()
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = CustomerFilter
     search_fields = ['name', 'company_name', 'country', 'email', 'whatsapp', 'source']
     ordering_fields = ['id', 'created_at', 'updated_at', 'name']
+    rbac_action_map = {
+        'list': 'customers.view',
+        'retrieve': 'customers.view',
+        'create': 'customers.create',
+        'update': 'customers.update',
+        'partial_update': 'customers.update',
+        'destroy': 'customers.delete',
+    }
 
 
 @extend_schema(tags=['外贸业务'])
-class InquiryViewSet(SoftDeleteModelViewSet):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+class InquiryViewSet(TenantScopedOwnerMixin, SoftDeleteModelViewSet):
+    owner_field = 'assignee'
+    permission_classes = [IsAuthenticated, HasRBACForViewAction]
     serializer_class = InquirySerializer
     queryset = Inquiry.objects.select_related('tenant', 'customer', 'assignee').all()
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = InquiryFilter
     search_fields = ['subject', 'product_name', 'message', 'country', 'source']
     ordering_fields = ['id', 'created_at', 'updated_at', 'subject']
+    rbac_action_map = {
+        'list': 'inquiries.view',
+        'retrieve': 'inquiries.view',
+        'create': 'inquiries.create',
+        'update': 'inquiries.update',
+        'partial_update': 'inquiries.update',
+        'destroy': 'inquiries.delete',
+    }
 
 
 @extend_schema(tags=['外贸业务'])
-class QuotationViewSet(SoftDeleteModelViewSet):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+class QuotationViewSet(TenantScopedOwnerMixin, SoftDeleteModelViewSet):
+    owner_field = 'owner'
+    permission_classes = [IsAuthenticated, HasRBACForViewAction]
     serializer_class = QuotationSerializer
     queryset = Quotation.objects.select_related('tenant', 'customer', 'inquiry', 'owner').prefetch_related('items').all()
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = QuotationFilter
     search_fields = ['quote_no', 'currency', 'trade_term']
     ordering_fields = ['id', 'created_at', 'updated_at', 'quote_no', 'total_amount']
+    rbac_action_map = {
+        'list': 'quotations.view',
+        'retrieve': 'quotations.view',
+        'create': 'quotations.create',
+        'update': 'quotations.update',
+        'partial_update': 'quotations.update',
+        'destroy': 'quotations.delete',
+    }
 
 
 @extend_schema(tags=['外贸业务'])

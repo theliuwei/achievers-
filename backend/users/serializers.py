@@ -1,13 +1,17 @@
 from django.contrib.auth import get_user_model, password_validation
+from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import (
+    Department,
     MembershipStatus,
     Permission,
     Role,
     Tenant,
+    TenantApplicationStatus,
     TenantMembership,
+    TenantRegistrationApplication,
     UserKind,
     UserProfile,
     resolve_tenant_for_rbac,
@@ -85,6 +89,7 @@ class RoleSerializer(serializers.ModelSerializer):
             'code',
             'name',
             'description',
+            'data_scope',
             'is_active',
             'is_system',
             'permissions',
@@ -97,10 +102,13 @@ class RoleListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Role
-        fields = ('id', 'code', 'name', 'is_active', 'is_system')
+        fields = ('id', 'code', 'name', 'data_scope', 'is_active', 'is_system')
 
 
 class TenantSerializer(serializers.ModelSerializer):
+    is_subscription_expired = serializers.BooleanField(read_only=True)
+    active_member_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Tenant
         fields = (
@@ -109,10 +117,25 @@ class TenantSerializer(serializers.ModelSerializer):
             'updated_at',
             'name',
             'code',
+            'address',
+            'contact_name',
+            'contact_phone',
+            'contact_email',
+            'primary_admin',
             'is_active',
+            'subscription_starts_at',
             'subscription_expires_at',
+            'max_members',
+            'storage_quota_mb',
+            'storage_used_mb',
+            'locked_reason',
+            'is_subscription_expired',
+            'active_member_count',
         )
-        read_only_fields = ('id', 'created_at', 'updated_at')
+        read_only_fields = ('id', 'created_at', 'updated_at', 'is_subscription_expired', 'active_member_count')
+
+    def get_active_member_count(self, obj):
+        return obj.active_member_count()
 
 
 class TenantMembershipSerializer(serializers.ModelSerializer):
@@ -132,10 +155,141 @@ class TenantMembershipSerializer(serializers.ModelSerializer):
             'tenant',
             'status',
             'title',
+            'department',
+            'reports_to',
             'invited_by',
             'roles',
         )
         read_only_fields = ('id', 'created_at', 'updated_at')
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        tenant = attrs.get('tenant') or getattr(self.instance, 'tenant', None)
+        status = attrs.get('status') or getattr(self.instance, 'status', None)
+        if tenant and status == MembershipStatus.ACTIVE and not tenant.is_available:
+            raise serializers.ValidationError({'tenant': '该公司已停用或订阅已到期'})
+        if tenant and status == MembershipStatus.ACTIVE:
+            is_new_active_member = self.instance is None or getattr(self.instance, 'status', None) != MembershipStatus.ACTIVE
+            if is_new_active_member and not tenant.can_add_member():
+                raise serializers.ValidationError(
+                    {'tenant': f'该公司员工账号数量已达到上限（{tenant.max_members} 个）'}
+                )
+        department = attrs.get('department') or getattr(self.instance, 'department', None)
+        reports_to = attrs.get('reports_to') or getattr(self.instance, 'reports_to', None)
+        if tenant and department and department.tenant_id != tenant.id:
+            raise serializers.ValidationError({'department': '部门必须属于当前公司'})
+        if tenant and reports_to and reports_to.tenant_id != tenant.id:
+            raise serializers.ValidationError({'reports_to': '直属上级必须属于当前公司'})
+        return attrs
+
+
+class DepartmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Department
+        fields = (
+            'id',
+            'created_at',
+            'updated_at',
+            'tenant',
+            'name',
+            'parent',
+            'manager',
+            'sort_order',
+            'is_active',
+        )
+        read_only_fields = ('id', 'created_at', 'updated_at')
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        tenant = attrs.get('tenant') or getattr(self.instance, 'tenant', None)
+        parent = attrs.get('parent') or getattr(self.instance, 'parent', None)
+        if tenant and parent and parent.tenant_id != tenant.id:
+            raise serializers.ValidationError({'parent': '上级部门必须属于当前公司'})
+        return attrs
+
+
+class TenantRegistrationApplicationSerializer(serializers.ModelSerializer):
+    admin_password = serializers.CharField(write_only=True, min_length=8, allow_blank=False, required=False)
+
+    class Meta:
+        model = TenantRegistrationApplication
+        fields = (
+            'id',
+            'created_at',
+            'updated_at',
+            'company_name',
+            'company_code',
+            'company_address',
+            'contact_name',
+            'contact_phone',
+            'contact_email',
+            'admin_username',
+            'admin_email',
+            'admin_first_name',
+            'admin_last_name',
+            'admin_phone',
+            'admin_password',
+            'requested_max_members',
+            'requested_storage_quota_mb',
+            'status',
+            'reviewed_by',
+            'reviewed_at',
+            'reject_reason',
+            'tenant',
+        )
+        read_only_fields = (
+            'id',
+            'created_at',
+            'updated_at',
+            'status',
+            'reviewed_by',
+            'reviewed_at',
+            'reject_reason',
+            'tenant',
+        )
+
+    def validate_company_code(self, value: str) -> str:
+        value = (value or '').strip().lower()
+        if not value:
+            raise serializers.ValidationError('请填写公司代码')
+        if Tenant.objects.filter(code=value).exists():
+            raise serializers.ValidationError('该公司代码已被使用')
+        if TenantRegistrationApplication.objects.filter(
+            company_code=value,
+            status=TenantApplicationStatus.PENDING,
+        ).exists():
+            raise serializers.ValidationError('该公司代码已有待审核申请')
+        return value
+
+    def validate_admin_username(self, value: str) -> str:
+        value = (value or '').strip()
+        if not value:
+            raise serializers.ValidationError('请填写主管理员用户名')
+        if UserInfo.objects.filter(username=value).exists():
+            raise serializers.ValidationError('该主管理员用户名已被使用')
+        return value
+
+    def validate_admin_email(self, value: str) -> str:
+        value = (value or '').strip()
+        if not value:
+            raise serializers.ValidationError('请填写主管理员邮箱')
+        if UserInfo.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError('该主管理员邮箱已被注册')
+        return value
+
+    def validate(self, attrs):
+        if self.instance is None and not attrs.get('admin_password'):
+            raise serializers.ValidationError({'admin_password': '请填写主管理员初始密码'})
+        return attrs
+
+    def create(self, validated_data):
+        password = validated_data.pop('admin_password')
+        validated_data['admin_password_hash'] = make_password(password)
+        return super().create(validated_data)
+
+
+class TenantApplicationReviewSerializer(serializers.Serializer):
+    reject_reason = serializers.CharField(required=False, allow_blank=True, trim_whitespace=True)
 
 
 def _set_user_roles(user, role_ids) -> None:
@@ -215,6 +369,18 @@ class UserSerializer(serializers.ModelSerializer):
             return RoleListSerializer(qs, many=True).data
         except UserProfile.DoesNotExist:
             return []
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        tenant = attrs.get('default_tenant') or getattr(self.instance, 'default_tenant', None)
+        user_kind = attrs.get('user_kind') or getattr(self.instance, 'user_kind', UserKind.TENANT)
+        if user_kind == UserKind.TENANT and tenant and not tenant.is_available:
+            raise serializers.ValidationError({'default_tenant': '该公司已停用或订阅已到期'})
+        if self.instance is None and user_kind == UserKind.TENANT and tenant and not tenant.can_add_member():
+            raise serializers.ValidationError(
+                {'default_tenant': f'该公司员工账号数量已达到上限（{tenant.max_members} 个）'}
+            )
+        return attrs
 
     def create(self, validated_data):
         role_ids = validated_data.pop('role_ids', None)
@@ -391,7 +557,7 @@ class RBACTokenObtainPairSerializer(TokenObtainPairSerializer):
         if getattr(user, 'user_kind', None) == UserKind.TENANT:
             tenant = getattr(user, 'default_tenant', None)
             m: TenantMembership | None = None
-            if tenant:
+            if tenant and tenant.is_available:
                 m = (
                     TenantMembership.objects.filter(
                         user=user,
@@ -399,6 +565,7 @@ class RBACTokenObtainPairSerializer(TokenObtainPairSerializer):
                         is_deleted=False,
                         status=MembershipStatus.ACTIVE,
                     )
+                    .select_related('tenant')
                     .order_by('id')
                     .first()
                 )
@@ -407,10 +574,11 @@ class RBACTokenObtainPairSerializer(TokenObtainPairSerializer):
                     user.tenant_memberships.filter(
                         is_deleted=False, status=MembershipStatus.ACTIVE
                     )
+                    .select_related('tenant')
                     .order_by('id')
                     .first()
                 )
-            if m:
+            if m and m.tenant.is_available:
                 token['permissions'] = sorted(m.get_permission_codes())
                 token['roles'] = list(
                     m.roles.filter(is_active=True, is_deleted=False).values_list('code', flat=True)

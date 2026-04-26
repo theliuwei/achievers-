@@ -41,6 +41,9 @@ const PublicLayout = () => {
             </>
           ) : (
             <>
+              <Link to="/tenant-apply" style={{ color: token.colorLink }}>
+                公司入驻
+              </Link>
               <Link to="/login" style={{ color: token.colorLink }}>
                 登录
               </Link>

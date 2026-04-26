@@ -1,8 +1,11 @@
+from datetime import timedelta
 from pathlib import Path
 from uuid import uuid4
 
-from django.core.files.storage import default_storage
 from django.contrib.auth import get_user_model
+from django.core.files.storage import default_storage
+from django.db import transaction
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters, status, viewsets
@@ -16,21 +19,36 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from core.viewsets import SoftDeleteModelViewSet
 
 from .filters import (
+    DepartmentFilter,
     PendingRegistrationFilter,
     RoleFilter,
     TenantFilter,
     TenantMembershipFilter,
+    TenantRegistrationApplicationFilter,
     UserInfoFilter,
 )
-from .models import MembershipStatus, Permission, Role, Tenant, TenantMembership, UserKind
+from .models import (
+    Department,
+    MembershipStatus,
+    Permission,
+    Role,
+    Tenant,
+    TenantApplicationStatus,
+    TenantMembership,
+    TenantRegistrationApplication,
+    UserKind,
+)
 from .serializers import (
+    DepartmentSerializer,
     MeSerializer,
     MePasswordChangeSerializer,
     MeUpdateSerializer,
     PermissionSerializer,
     RBACTokenObtainPairSerializer,
     RoleSerializer,
+    TenantApplicationReviewSerializer,
     TenantMembershipSerializer,
+    TenantRegistrationApplicationSerializer,
     TenantSerializer,
     UserRegisterSerializer,
     UserSerializer,
@@ -177,6 +195,141 @@ class TenantMembershipViewSet(SoftDeleteModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = TenantMembershipFilter
     search_fields = ['user__username', 'user__email', 'tenant__name', 'tenant__code', 'title']
+
+
+@extend_schema(tags=['用户 / RBAC'])
+class DepartmentViewSet(SoftDeleteModelViewSet):
+    queryset = Department.objects.select_related('tenant', 'parent', 'manager').all()
+    serializer_class = DepartmentSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_class = DepartmentFilter
+    search_fields = ['name', 'tenant__name', 'tenant__code', 'manager__username']
+
+
+@extend_schema(tags=['用户 / RBAC'])
+class TenantRegistrationApplicationViewSet(SoftDeleteModelViewSet):
+    queryset = TenantRegistrationApplication.objects.select_related(
+        'reviewed_by',
+        'tenant',
+    ).all()
+    serializer_class = TenantRegistrationApplicationSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_class = TenantRegistrationApplicationFilter
+    search_fields = [
+        'company_name',
+        'company_code',
+        'company_address',
+        'contact_name',
+        'contact_phone',
+        'contact_email',
+        'admin_username',
+        'admin_email',
+    ]
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [AllowAny()]
+        return [IsAuthenticated(), IsAdminUser()]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if self.action == 'list':
+            return qs.order_by('-created_at', '-id')
+        return qs
+
+    @extend_schema(request=TenantApplicationReviewSerializer, responses={200: TenantRegistrationApplicationSerializer})
+    @action(detail=True, methods=['post'], url_path='approve')
+    def approve(self, request, pk=None):
+        application = self.get_object()
+        if application.status != TenantApplicationStatus.PENDING:
+            return Response({'detail': '该入驻申请已处理，不能重复审核。'}, status=status.HTTP_400_BAD_REQUEST)
+        if Tenant.objects.filter(code=application.company_code).exists():
+            return Response({'company_code': '该公司代码已被使用。'}, status=status.HTTP_400_BAD_REQUEST)
+        if UserInfo.objects.filter(username=application.admin_username).exists():
+            return Response({'admin_username': '该主管理员用户名已被使用。'}, status=status.HTTP_400_BAD_REQUEST)
+        if UserInfo.objects.filter(email__iexact=application.admin_email).exists():
+            return Response({'admin_email': '该主管理员邮箱已被注册。'}, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            starts_at = timezone.now()
+            tenant = Tenant.objects.create(
+                name=application.company_name,
+                code=application.company_code,
+                address=application.company_address,
+                contact_name=application.contact_name,
+                contact_phone=application.contact_phone,
+                contact_email=application.contact_email,
+                is_active=True,
+                subscription_starts_at=starts_at,
+                subscription_expires_at=starts_at + timedelta(days=365),
+                max_members=application.requested_max_members,
+                storage_quota_mb=application.requested_storage_quota_mb,
+            )
+            admin_user = UserInfo.objects.create(
+                username=application.admin_username,
+                email=application.admin_email,
+                first_name=application.admin_first_name,
+                last_name=application.admin_last_name,
+                phone=application.admin_phone,
+                password=application.admin_password_hash,
+                is_active=True,
+                is_staff=True,
+                user_kind=UserKind.TENANT,
+                default_tenant=tenant,
+            )
+            tenant.primary_admin = admin_user
+            tenant.save(update_fields=['primary_admin', 'updated_at'])
+            membership = TenantMembership.objects.create(
+                user=admin_user,
+                tenant=tenant,
+                status=MembershipStatus.ACTIVE,
+                title='主管理员',
+            )
+            tenant_admin = Role.objects.filter(code='tenant_admin', is_active=True).first()
+            if tenant_admin:
+                membership.roles.add(tenant_admin)
+
+            application.status = TenantApplicationStatus.APPROVED
+            application.reviewed_by = request.user
+            application.reviewed_at = starts_at
+            application.tenant = tenant
+            application.reject_reason = ''
+            application.save(
+                update_fields=[
+                    'status',
+                    'reviewed_by',
+                    'reviewed_at',
+                    'tenant',
+                    'reject_reason',
+                    'updated_at',
+                ]
+            )
+        serializer = self.get_serializer(application)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(request=TenantApplicationReviewSerializer, responses={200: TenantRegistrationApplicationSerializer})
+    @action(detail=True, methods=['post'], url_path='reject')
+    def reject(self, request, pk=None):
+        application = self.get_object()
+        if application.status != TenantApplicationStatus.PENDING:
+            return Response({'detail': '该入驻申请已处理，不能重复审核。'}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = TenantApplicationReviewSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        application.status = TenantApplicationStatus.REJECTED
+        application.reviewed_by = request.user
+        application.reviewed_at = timezone.now()
+        application.reject_reason = serializer.validated_data.get('reject_reason', '')
+        application.save(
+            update_fields=[
+                'status',
+                'reviewed_by',
+                'reviewed_at',
+                'reject_reason',
+                'updated_at',
+            ]
+        )
+        return Response(self.get_serializer(application).data, status=status.HTTP_200_OK)
 
 
 @extend_schema(tags=['用户 / RBAC'])

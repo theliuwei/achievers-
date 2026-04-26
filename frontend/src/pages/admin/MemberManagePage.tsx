@@ -19,6 +19,8 @@ const fields: EntityFieldConfig<TenantMembershipRow>[] = [
   { key: 'tenant', title: '公司 ID', valueType: 'digit', search: true, form: { rules: [{ required: true, message: '请输入公司 ID' }] }, table: { width: 110 } },
   { key: 'user', title: '用户 ID', valueType: 'digit', search: true, form: { rules: [{ required: true, message: '请输入用户 ID' }] }, table: { width: 110 } },
   { key: 'title', title: '职位/备注', valueType: 'text', search: true, table: { width: 160 } },
+  { key: 'department', title: '部门 ID', valueType: 'digit', search: true, table: { width: 110 } },
+  { key: 'reports_to', title: '直属上级成员ID', valueType: 'digit', search: true, table: { width: 150 } },
   {
     key: 'status',
     title: '成员状态',
@@ -47,16 +49,18 @@ const MemberManagePage = () => (
     rowKey="id"
     createTitle="新增成员"
     editTitle="编辑成员"
-    createDefaults={{ status: 'active', title: '', invited_by: null, roles: [] }}
+    createDefaults={{ status: 'active', title: '', department: null, reports_to: null, invited_by: null, roles: [] }}
     transformSubmit={(values) => ({
       tenant: Number(values.tenant),
       user: Number(values.user),
       status: values.status,
       title: values.title?.trim() ?? '',
+      department: values.department ? Number(values.department) : null,
+      reports_to: values.reports_to ? Number(values.reports_to) : null,
       invited_by: values.invited_by ? Number(values.invited_by) : null,
       roles: values.roles ?? [],
     })}
-    tableScrollX={1200}
+    tableScrollX={1500}
   />
 )
 

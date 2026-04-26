@@ -41,9 +41,22 @@ class Permission(BaseModel):
 class Role(BaseModel):
     """角色：多对多绑定 Permission；平台人员绑在 UserProfile，企业人员绑在 TenantMembership。"""
 
+    class DataScope(models.TextChoices):
+        OWN = 'own', _('本人数据')
+        DEPARTMENT = 'department', _('部门/下属数据')
+        TENANT = 'tenant', _('公司全部数据')
+        ALL = 'all', _('平台全部数据')
+
     code = models.SlugField('角色代码', max_length=64, unique=True, db_index=True)
     name = models.CharField('名称', max_length=100)
     description = models.TextField('说明', blank=True)
+    data_scope = models.CharField(
+        '数据权限范围',
+        max_length=20,
+        choices=DataScope.choices,
+        default=DataScope.OWN,
+        db_index=True,
+    )
     is_active = models.BooleanField('启用', default=True)
     is_system = models.BooleanField(
         '系统内置',
@@ -67,6 +80,14 @@ class Role(BaseModel):
         return self.name
 
 
+DATA_SCOPE_PRIORITY = {
+    Role.DataScope.OWN: 10,
+    Role.DataScope.DEPARTMENT: 20,
+    Role.DataScope.TENANT: 30,
+    Role.DataScope.ALL: 40,
+}
+
+
 class UserKind(models.TextChoices):
     """登录身份：平台侧（你们运营 / 支持）vs 企业侧（客户公司成员）。"""
 
@@ -82,6 +103,14 @@ class MembershipStatus(models.TextChoices):
     SUSPENDED = 'suspended', _('已暂停')
 
 
+class TenantApplicationStatus(models.TextChoices):
+    """租户入驻申请审核状态。"""
+
+    PENDING = 'pending', _('待审核')
+    APPROVED = 'approved', _('已通过')
+    REJECTED = 'rejected', _('已拒绝')
+
+
 class Tenant(BaseModel):
     """
     租户 = 客户公司 / 组织。
@@ -90,7 +119,25 @@ class Tenant(BaseModel):
 
     name = models.CharField('名称', max_length=200)
     code = models.SlugField('租户代码', max_length=64, unique=True, db_index=True)
+    address = models.TextField('公司地址', blank=True, default='')
+    contact_name = models.CharField('联系人', max_length=100, blank=True, default='')
+    contact_phone = models.CharField('联系电话', max_length=32, blank=True, default='')
+    contact_email = models.EmailField('联系邮箱', blank=True, default='')
+    primary_admin = models.ForeignKey(
+        'users.UserInfo',
+        verbose_name='主管理员',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='primary_admin_tenants',
+    )
     is_active = models.BooleanField('启用', default=True, db_index=True)
+    subscription_starts_at = models.DateTimeField(
+        '订阅/合同开始时间',
+        null=True,
+        blank=True,
+        db_index=True,
+    )
     subscription_expires_at = models.DateTimeField(
         '订阅/合同到期时间',
         null=True,
@@ -98,6 +145,10 @@ class Tenant(BaseModel):
         db_index=True,
         help_text='B2B SaaS：按公司维度记录；与单用户会员解耦。',
     )
+    max_members = models.PositiveIntegerField('员工账号上限', default=20)
+    storage_quota_mb = models.PositiveIntegerField('附件容量上限(MB)', default=1024)
+    storage_used_mb = models.PositiveIntegerField('附件已用容量(MB)', default=0)
+    locked_reason = models.CharField('锁定原因', max_length=200, blank=True, default='')
 
     class Meta:
         db_table = 'Tenant'
@@ -107,6 +158,127 @@ class Tenant(BaseModel):
 
     def __str__(self) -> str:
         return f'{self.name} ({self.code})'
+
+    @property
+    def is_subscription_expired(self) -> bool:
+        return bool(self.subscription_expires_at and self.subscription_expires_at <= timezone.now())
+
+    @property
+    def is_available(self) -> bool:
+        return self.is_active and not self.is_subscription_expired and not self.is_deleted
+
+    def active_member_count(self) -> int:
+        return self.memberships.filter(
+            status=MembershipStatus.ACTIVE,
+            is_deleted=False,
+            user__is_active=True,
+            user__is_deleted=False,
+        ).count()
+
+    def can_add_member(self, extra_count: int = 1) -> bool:
+        return self.active_member_count() + extra_count <= self.max_members
+
+    def can_use_storage(self, add_mb: int = 0) -> bool:
+        return self.storage_used_mb + max(add_mb, 0) <= self.storage_quota_mb
+
+
+class TenantRegistrationApplication(BaseModel):
+    """客户公司公开入驻申请，审核通过后创建租户与主管理员。"""
+
+    company_name = models.CharField('公司名称', max_length=200)
+    company_code = models.SlugField('公司代码', max_length=64, db_index=True)
+    company_address = models.TextField('公司地址', blank=True, default='')
+    contact_name = models.CharField('联系人', max_length=100, blank=True, default='')
+    contact_phone = models.CharField('联系电话', max_length=32, blank=True, default='')
+    contact_email = models.EmailField('联系邮箱', blank=True, default='')
+    admin_username = models.CharField('主管理员用户名', max_length=150, db_index=True)
+    admin_email = models.EmailField('主管理员邮箱', db_index=True)
+    admin_first_name = models.CharField('主管理员名', max_length=150, blank=True, default='')
+    admin_last_name = models.CharField('主管理员姓', max_length=150, blank=True, default='')
+    admin_phone = models.CharField('主管理员手机', max_length=32, blank=True, default='')
+    admin_password_hash = models.CharField('主管理员密码哈希', max_length=128)
+    requested_max_members = models.PositiveIntegerField('申请员工账号上限', default=20)
+    requested_storage_quota_mb = models.PositiveIntegerField('申请附件容量(MB)', default=1024)
+    status = models.CharField(
+        '审核状态',
+        max_length=16,
+        choices=TenantApplicationStatus.choices,
+        default=TenantApplicationStatus.PENDING,
+        db_index=True,
+    )
+    reviewed_by = models.ForeignKey(
+        'users.UserInfo',
+        verbose_name='审核人',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='reviewed_tenant_applications',
+    )
+    reviewed_at = models.DateTimeField('审核时间', null=True, blank=True)
+    reject_reason = models.TextField('拒绝原因', blank=True, default='')
+    tenant = models.OneToOneField(
+        Tenant,
+        verbose_name='创建的租户',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='registration_application',
+    )
+
+    class Meta:
+        db_table = 'TenantRegistrationApplication'
+        ordering = ['-created_at', '-id']
+        verbose_name = '租户入驻申请'
+        verbose_name_plural = '租户入驻申请'
+
+    def __str__(self) -> str:
+        return f'{self.company_name} ({self.get_status_display()})'
+
+
+class Department(BaseModel):
+    """租户内组织部门，用于部门级数据权限。"""
+
+    tenant = models.ForeignKey(
+        Tenant,
+        verbose_name='租户',
+        on_delete=models.CASCADE,
+        related_name='departments',
+    )
+    name = models.CharField('部门名称', max_length=100)
+    parent = models.ForeignKey(
+        'self',
+        verbose_name='上级部门',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='children',
+    )
+    manager = models.ForeignKey(
+        'users.UserInfo',
+        verbose_name='部门负责人',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='managed_departments',
+    )
+    sort_order = models.PositiveIntegerField('排序', default=0)
+    is_active = models.BooleanField('启用', default=True, db_index=True)
+
+    class Meta:
+        db_table = 'Department'
+        ordering = ['tenant_id', 'sort_order', 'id']
+        verbose_name = '部门'
+        verbose_name_plural = '部门'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('tenant', 'name'),
+                condition=models.Q(is_deleted=False),
+                name='users_department_tenant_name_uniq_active',
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f'{self.tenant_id}:{self.name}'
 
 
 class TenantMembership(BaseModel):
@@ -135,6 +307,22 @@ class TenantMembership(BaseModel):
         db_index=True,
     )
     title = models.CharField('职位/备注', max_length=100, blank=True, default='')
+    department = models.ForeignKey(
+        Department,
+        verbose_name='所属部门',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='memberships',
+    )
+    reports_to = models.ForeignKey(
+        'self',
+        verbose_name='直属上级',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='direct_reports',
+    )
     invited_by = models.ForeignKey(
         'users.UserInfo',
         verbose_name='邀请人',
@@ -172,12 +360,69 @@ class TenantMembership(BaseModel):
             codes.update(role.permissions.values_list('code', flat=True))
         return codes
 
+    def get_data_scope(self) -> str:
+        scope = Role.DataScope.OWN
+        role_qs = self.roles.filter(is_active=True, is_deleted=False)
+        for role in role_qs:
+            if DATA_SCOPE_PRIORITY.get(role.data_scope, 0) > DATA_SCOPE_PRIORITY.get(scope, 0):
+                scope = role.data_scope
+        return scope
+
+    def get_department_user_ids(self) -> set[int]:
+        if not self.department_id:
+            return {self.user_id}
+        memberships = TenantMembership.objects.filter(
+            tenant=self.tenant,
+            department=self.department,
+            status=MembershipStatus.ACTIVE,
+            is_deleted=False,
+        )
+        return set(memberships.values_list('user_id', flat=True))
+
+    def get_subordinate_user_ids(self) -> set[int]:
+        seen_membership_ids = {self.id}
+        user_ids = {self.user_id}
+        queue = [self.id]
+        while queue:
+            current_id = queue.pop(0)
+            reports = TenantMembership.objects.filter(
+                reports_to_id=current_id,
+                tenant=self.tenant,
+                status=MembershipStatus.ACTIVE,
+                is_deleted=False,
+            ).values_list('id', 'user_id')
+            for membership_id, user_id in reports:
+                if membership_id in seen_membership_ids:
+                    continue
+                seen_membership_ids.add(membership_id)
+                user_ids.add(user_id)
+                queue.append(membership_id)
+        return user_ids
+
+    def get_accessible_user_ids(self) -> set[int] | None:
+        scope = self.get_data_scope()
+        if scope == Role.DataScope.ALL:
+            return None
+        if scope == Role.DataScope.TENANT:
+            return set(
+                TenantMembership.objects.filter(
+                    tenant=self.tenant,
+                    status=MembershipStatus.ACTIVE,
+                    is_deleted=False,
+                ).values_list('user_id', flat=True)
+            )
+        if scope == Role.DataScope.DEPARTMENT:
+            return self.get_department_user_ids() | self.get_subordinate_user_ids()
+        return {self.user_id}
+
     def has_permission(self, code: str) -> bool:
         user = self.user
         if not user.is_active:
             return False
         if user.is_superuser:
             return True
+        if not self.tenant.is_available:
+            return False
         if self.status != MembershipStatus.ACTIVE:
             return False
         return code in self.get_permission_codes()
@@ -356,6 +601,8 @@ def user_has_tenant_context(user, tenant: Tenant) -> bool:
         return False
     if user.is_superuser or getattr(user, 'user_kind', None) == UserKind.PLATFORM:
         return True
+    if not tenant.is_available:
+        return False
     if getattr(user, 'user_kind', None) != UserKind.TENANT:
         return True
     return TenantMembership.objects.filter(
@@ -385,7 +632,7 @@ def resolve_tenant_for_rbac(user, request=None) -> Tenant | None:
         )
     if candidate is None and getattr(user, 'default_tenant_id', None):
         candidate = getattr(user, 'default_tenant', None)
-    if candidate is None or not user_has_tenant_context(user, candidate):
+    if candidate is None or not candidate.is_available or not user_has_tenant_context(user, candidate):
         return None
     return candidate
 
@@ -417,3 +664,38 @@ def user_has_rbac_permission(user, code: str, request=None) -> bool:
         return user.rbac_profile.has_permission(code)
     except UserProfile.DoesNotExist:
         return False
+
+
+def resolve_membership_for_rbac(user, request=None) -> TenantMembership | None:
+    tenant = resolve_tenant_for_rbac(user, request)
+    if tenant is None:
+        return None
+    return (
+        TenantMembership.objects.filter(
+            user=user,
+            tenant=tenant,
+            status=MembershipStatus.ACTIVE,
+            is_deleted=False,
+        )
+        .select_related('tenant', 'department', 'reports_to')
+        .prefetch_related('roles')
+        .first()
+    )
+
+
+def filter_queryset_by_data_scope(queryset, user, request=None, owner_field: str | None = None):
+    """按企业用户的数据范围过滤业务 queryset；平台/超管不收窄。"""
+    if not user or not getattr(user, 'is_authenticated', False):
+        return queryset.none()
+    if user.is_superuser or getattr(user, 'user_kind', None) == UserKind.PLATFORM:
+        return queryset
+    membership = resolve_membership_for_rbac(user, request)
+    if membership is None:
+        return queryset.none()
+    queryset = queryset.filter(tenant=membership.tenant)
+    if owner_field is None:
+        return queryset
+    accessible_user_ids = membership.get_accessible_user_ids()
+    if accessible_user_ids is None:
+        return queryset
+    return queryset.filter(**{f'{owner_field}__in': accessible_user_ids})

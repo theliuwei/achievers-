@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from .views import (
+    DepartmentViewSet,
     MeAvatarUploadView,
     MePasswordChangeView,
     MeView,
@@ -12,6 +13,7 @@ from .views import (
     RegisterView,
     RoleViewSet,
     TenantMembershipViewSet,
+    TenantRegistrationApplicationViewSet,
     TenantViewSet,
     UserViewSet,
 )
@@ -21,7 +23,13 @@ router.register('permissions', PermissionViewSet, basename='permission')
 router.register('roles', RoleViewSet, basename='role')
 router.register('accounts', UserViewSet, basename='user')
 router.register('tenants', TenantViewSet, basename='tenant')
+router.register('departments', DepartmentViewSet, basename='department')
 router.register('tenant-memberships', TenantMembershipViewSet, basename='tenant-membership')
+router.register(
+    'tenant-applications',
+    TenantRegistrationApplicationViewSet,
+    basename='tenant-application',
+)
 router.register(
     'pending-registrations',
     PendingRegistrationViewSet,

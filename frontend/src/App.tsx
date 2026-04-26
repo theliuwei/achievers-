@@ -22,6 +22,7 @@ import UserManagePage from './pages/admin/UserManagePage'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
+import TenantApplyPage from './pages/TenantApplyPage'
 
 const App = () => (
   <Routes>
@@ -52,6 +53,20 @@ const App = () => (
             }}
           >
             <RegisterPage />
+          </div>
+        }
+      />
+      <Route
+        path="/tenant-apply"
+        element={
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              padding: '48px 24px',
+            }}
+          >
+            <TenantApplyPage />
           </div>
         }
       />

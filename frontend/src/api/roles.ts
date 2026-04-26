@@ -16,6 +16,7 @@ export interface RoleRow {
   code: string
   name: string
   description: string
+  data_scope: 'own' | 'department' | 'tenant' | 'all'
   is_active: boolean
   is_system: boolean
   permissions: number[]
@@ -25,6 +26,7 @@ export interface RolePayload {
   code: string
   name: string
   description?: string
+  data_scope: 'own' | 'department' | 'tenant' | 'all'
   is_active: boolean
   is_system: boolean
   permissions?: number[]
@@ -47,6 +49,7 @@ export interface RoleListParams {
   code?: string
   name?: string
   description?: string
+  data_scope?: 'own' | 'department' | 'tenant' | 'all'
   is_active?: boolean
   is_system?: boolean
 }

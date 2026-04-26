@@ -2,7 +2,15 @@ from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import Permission, Role, Tenant, TenantMembership, UserProfile
+from .models import (
+    Department,
+    Permission,
+    Role,
+    Tenant,
+    TenantMembership,
+    TenantRegistrationApplication,
+    UserProfile,
+)
 
 UserInfo = get_user_model()
 
@@ -22,25 +30,51 @@ class PermissionAdmin(admin.ModelAdmin):
 
 @admin.register(Role)
 class RoleAdmin(admin.ModelAdmin):
-    list_display = ('code', 'name', 'is_active', 'is_system')
-    list_filter = ('is_active', 'is_system')
+    list_display = ('code', 'name', 'data_scope', 'is_active', 'is_system')
+    list_filter = ('data_scope', 'is_active', 'is_system')
     search_fields = ('code', 'name')
     filter_horizontal = ('permissions',)
 
 
 @admin.register(Tenant)
 class TenantAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'code', 'is_active', 'subscription_expires_at')
+    list_display = (
+        'id',
+        'name',
+        'code',
+        'primary_admin',
+        'is_active',
+        'max_members',
+        'storage_quota_mb',
+        'subscription_expires_at',
+    )
     list_filter = ('is_active',)
-    search_fields = ('name', 'code')
+    search_fields = ('name', 'code', 'address', 'contact_name', 'contact_email')
+    raw_id_fields = ('primary_admin',)
+
+
+@admin.register(TenantRegistrationApplication)
+class TenantRegistrationApplicationAdmin(admin.ModelAdmin):
+    list_display = ('id', 'company_name', 'company_code', 'admin_username', 'status', 'tenant')
+    list_filter = ('status',)
+    search_fields = ('company_name', 'company_code', 'admin_username', 'admin_email')
+    raw_id_fields = ('reviewed_by', 'tenant')
+
+
+@admin.register(Department)
+class DepartmentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'tenant', 'name', 'parent', 'manager', 'is_active')
+    list_filter = ('tenant', 'is_active')
+    search_fields = ('name', 'tenant__name', 'tenant__code', 'manager__username')
+    raw_id_fields = ('tenant', 'parent', 'manager')
 
 
 @admin.register(TenantMembership)
 class TenantMembershipAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'tenant', 'status', 'title', 'is_deleted')
-    list_filter = ('status', 'is_deleted', 'tenant')
+    list_display = ('id', 'user', 'tenant', 'department', 'reports_to', 'status', 'title', 'is_deleted')
+    list_filter = ('status', 'is_deleted', 'tenant', 'department')
     filter_horizontal = ('roles',)
-    raw_id_fields = ('user', 'invited_by', 'tenant')
+    raw_id_fields = ('user', 'invited_by', 'tenant', 'department', 'reports_to')
     search_fields = ('user__username', 'tenant__name', 'tenant__code')
 
 

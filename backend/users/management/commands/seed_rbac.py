@@ -11,6 +11,7 @@ TENANT_ROLE_PERMISSIONS: dict[str, dict[str, object]] = {
     'tenant_admin': {
         'name': '合作公司管理员',
         'description': '合作公司侧管理员，可查看并维护公司、成员、产品、询盘、客户和报价模块。',
+        'data_scope': Role.DataScope.TENANT,
         'permissions': {
             'tenants.view',
             'tenants.create',
@@ -43,6 +44,25 @@ TENANT_ROLE_PERMISSIONS: dict[str, dict[str, object]] = {
     'tenant_sales': {
         'name': '外贸业务员',
         'description': '负责询盘、客户和报价，可查看产品资料。',
+        'data_scope': Role.DataScope.OWN,
+        'permissions': {
+            'products.view',
+            'inquiries.view',
+            'inquiries.create',
+            'inquiries.update',
+            'customers.view',
+            'customers.create',
+            'customers.update',
+            'quotations.view',
+            'quotations.create',
+            'quotations.update',
+            'quotations.download',
+        },
+    },
+    'tenant_sales_manager': {
+        'name': '销售经理',
+        'description': '可查看本部门与下属业务员的客户、询盘和报价数据。',
+        'data_scope': Role.DataScope.DEPARTMENT,
         'permissions': {
             'products.view',
             'inquiries.view',
@@ -60,6 +80,7 @@ TENANT_ROLE_PERMISSIONS: dict[str, dict[str, object]] = {
     'tenant_product_manager': {
         'name': '产品维护员',
         'description': '负责产品资料维护，仅看到产品管理模块。',
+        'data_scope': Role.DataScope.TENANT,
         'permissions': {
             'products.view',
             'products.create',
@@ -71,6 +92,7 @@ TENANT_ROLE_PERMISSIONS: dict[str, dict[str, object]] = {
     'tenant_viewer': {
         'name': '合作公司只读',
         'description': '只能查看产品、询盘、客户和报价，不可修改。',
+        'data_scope': Role.DataScope.TENANT,
         'permissions': {
             'products.view',
             'inquiries.view',
@@ -164,6 +186,7 @@ class Command(BaseCommand):
             defaults={
                 'name': '管理员',
                 'description': '业务侧全部权限（非 Django 超级用户）',
+                'data_scope': Role.DataScope.ALL,
                 'is_active': True,
                 'is_system': True,
             },
@@ -176,6 +199,7 @@ class Command(BaseCommand):
             defaults={
                 'name': '内容编辑',
                 'description': '可改产品/品牌/公司内容，无删除与用户管理',
+                'data_scope': Role.DataScope.TENANT,
                 'is_active': True,
                 'is_system': True,
             },
@@ -201,6 +225,7 @@ class Command(BaseCommand):
             defaults={
                 'name': '只读',
                 'description': '仅查看，无增删改与上传',
+                'data_scope': Role.DataScope.TENANT,
                 'is_active': True,
                 'is_system': True,
             },
@@ -219,6 +244,7 @@ class Command(BaseCommand):
                 defaults={
                     'name': str(config['name']),
                     'description': str(config['description']),
+                    'data_scope': config.get('data_scope', Role.DataScope.OWN),
                     'is_active': True,
                     'is_system': True,
                 },
