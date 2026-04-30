@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from users.models import Tenant
 
@@ -23,7 +24,7 @@ MOCK_COMPANIES = [
 
 
 class Command(BaseCommand):
-    help = '写入公司管理 mock 数据（Tenant），可重复执行，以 code 为幂等键。'
+    help = _('Seed company mock data (Tenant). Idempotent by code.')
 
     def handle(self, *args, **options):
         created_count = 0
@@ -41,12 +42,17 @@ class Command(BaseCommand):
             )
             if created:
                 created_count += 1
-                self.stdout.write(self.style.SUCCESS(f'公司已创建: {name} ({code})'))
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        _('Company created: %(name)s (%(code)s)') % {'name': name, 'code': code}
+                    )
+                )
             else:
                 updated_count += 1
 
         self.stdout.write(
             self.style.SUCCESS(
-                f'公司 mock 数据完成：新增 {created_count} 条，更新 {updated_count} 条。'
+                _('Company mock data finished: created %(created)s, updated %(updated)s.')
+                % {'created': created_count, 'updated': updated_count}
             )
         )

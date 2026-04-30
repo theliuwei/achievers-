@@ -1,4 +1,5 @@
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from django.db import models
 from rest_framework import viewsets
 from rest_framework.exceptions import APIException
@@ -45,7 +46,7 @@ class SoftDeleteModelViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         if not hasattr(instance, 'is_deleted'):
-            raise APIException('该资源未配置软删除字段，禁止通过 API 删除。')
+            raise APIException(_('Soft delete is not configured for this resource.'))
         update_fields = self._release_unique_text_fields(instance)
         instance.is_deleted = True
         update_fields.append('is_deleted')

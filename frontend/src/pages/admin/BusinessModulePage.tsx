@@ -1,6 +1,7 @@
 import { PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button, Card, Col, Input, Progress, Row, Space, Statistic, Table, Tag, Timeline, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import { useTranslation } from 'react-i18next'
 
 const { Title, Paragraph, Text } = Typography
 
@@ -41,11 +42,13 @@ export function BusinessModulePage<T extends object>({
   dataSource,
   rowKey,
   tags = [],
-  progressTitle = '本月目标完成度',
+  progressTitle,
   progressPercent = 68,
   timelineItems = [],
   actions = [],
 }: BusinessModulePageProps<T>) {
+  const { t } = useTranslation('common')
+  const resolvedProgressTitle = progressTitle ?? t('business.monthlyGoalProgress')
   return (
     <Space direction="vertical" size={16} style={{ width: '100%' }}>
       <div>
@@ -71,7 +74,7 @@ export function BusinessModulePage<T extends object>({
         <Col xs={24} xl={18}>
           <Card
             variant="borderless"
-            title={`${title}列表`}
+            title={`${title}${t('business.listSuffix')}`}
             extra={
               <Space wrap>
                 <Input
@@ -80,7 +83,7 @@ export function BusinessModulePage<T extends object>({
                   placeholder={searchPlaceholder}
                   style={{ width: 240 }}
                 />
-                <Button icon={<ReloadOutlined />}>刷新</Button>
+                <Button icon={<ReloadOutlined />}>{t('actions.refresh')}</Button>
                 <Button type="primary" icon={<PlusOutlined />}>
                   {primaryAction}
                 </Button>
@@ -91,7 +94,7 @@ export function BusinessModulePage<T extends object>({
               rowKey={rowKey}
               columns={columns}
               dataSource={dataSource}
-              pagination={{ pageSize: 5, showTotal: (total) => `共 ${total} 条` }}
+              pagination={{ pageSize: 5, showTotal: (total) => t('business.totalCount', { count: total }) }}
               scroll={{ x: 'max-content' }}
             />
           </Card>
@@ -99,10 +102,10 @@ export function BusinessModulePage<T extends object>({
 
         <Col xs={24} xl={6}>
           <Space direction="vertical" size={16} style={{ width: '100%' }}>
-            <Card variant="borderless" title="运营提示">
+            <Card variant="borderless" title={t('business.operationTips')}>
               <Space direction="vertical" size={12} style={{ width: '100%' }}>
                 <div>
-                  <Text type="secondary">{progressTitle}</Text>
+                  <Text type="secondary">{resolvedProgressTitle}</Text>
                   <Progress percent={progressPercent} style={{ marginTop: 8 }} />
                 </div>
                 {tags.length ? (
@@ -117,18 +120,18 @@ export function BusinessModulePage<T extends object>({
               </Space>
             </Card>
 
-            <Card variant="borderless" title="下一步">
+            <Card variant="borderless" title={t('business.nextStep')}>
               {timelineItems.length ? (
                 <Timeline items={timelineItems.map((children) => ({ children }))} />
               ) : (
                 <Paragraph type="secondary" style={{ marginBottom: 0 }}>
-                  先完成基础数据，再接入真实业务 API。
+                  {t('business.defaultNextStep')}
                 </Paragraph>
               )}
             </Card>
 
             {actions.length ? (
-              <Card variant="borderless" title="快捷操作">
+              <Card variant="borderless" title={t('business.quickActions')}>
                 <Space direction="vertical" style={{ width: '100%' }}>
                   {actions.map((action) => (
                     <Button block type={action.type ?? 'default'} key={action.label}>

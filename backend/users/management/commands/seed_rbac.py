@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+from django.utils.translation import gettext as _
 
 from users.models import Permission, Role
 
@@ -164,11 +165,31 @@ DEFAULT_PERMISSIONS: list[tuple[str, str, str]] = [
     _perm('company.delete', '公司内容-删除', ''),
     _perm('company.upload', '公司内容-上传', ''),
     _perm('company.download', '公司内容-下载', ''),
+    # VAT
+    _perm('vat.view', 'VAT-查看', '查看 VAT 税率'),
+    _perm('vat.create', 'VAT-新增', '新增 VAT 税率'),
+    _perm('vat.update', 'VAT-编辑', '编辑 VAT 税率'),
+    _perm('vat.delete', 'VAT-删除', '删除 VAT 税率'),
+    # Product translations
+    _perm('product_translations.view', '产品翻译-查看', '查看产品翻译列表与详情'),
+    _perm('product_translations.create', '产品翻译-新增', '新增产品翻译'),
+    _perm('product_translations.update', '产品翻译-编辑', '编辑产品翻译'),
+    _perm('product_translations.delete', '产品翻译-删除', '删除产品翻译'),
+    # Category translations
+    _perm('category_translations.view', '类目翻译-查看', '查看类目翻译列表与详情'),
+    _perm('category_translations.create', '类目翻译-新增', '新增类目翻译'),
+    _perm('category_translations.update', '类目翻译-编辑', '编辑类目翻译'),
+    _perm('category_translations.delete', '类目翻译-删除', '删除类目翻译'),
+    # Consent logs
+    _perm('consent.view', '同意记录-查看', '查看用户同意记录'),
+    # GDPR self-service
+    _perm('gdpr.export', 'GDPR-导出个人数据', '导出当前登录用户的个人数据'),
+    _perm('gdpr.delete', 'GDPR-删除个人数据', '注销并匿名化当前登录用户数据'),
 ]
 
 
 class Command(BaseCommand):
-    help = '写入默认权限点与示例角色（可重复执行，以 code 为幂等键）'
+    help = _('Seed default permissions and sample roles (idempotent by code).')
 
     def handle(self, *args, **options):
         created_p = 0
@@ -179,7 +200,7 @@ class Command(BaseCommand):
             )
             if c:
                 created_p += 1
-                self.stdout.write(self.style.SUCCESS(f'权限已创建: {code}'))
+                self.stdout.write(self.style.SUCCESS(_('Permission created: %(code)s') % {'code': code}))
 
         admin_role, _ = Role.objects.update_or_create(
             code='administrator',
@@ -192,7 +213,7 @@ class Command(BaseCommand):
             },
         )
         admin_role.permissions.set(Permission.objects.all())
-        self.stdout.write(self.style.SUCCESS('角色 administrator 已绑定全部权限'))
+        self.stdout.write(self.style.SUCCESS(_('Role administrator bound to all permissions.')))
 
         editor_role, _ = Role.objects.update_or_create(
             code='content_editor',
@@ -252,12 +273,11 @@ class Command(BaseCommand):
             role.permissions.set(
                 Permission.objects.filter(code__in=config['permissions'])
             )
-            self.stdout.write(self.style.SUCCESS(f'角色 {role_code} 已更新'))
+            self.stdout.write(self.style.SUCCESS(_('Role %(role)s updated.') % {'role': role_code}))
 
         self.stdout.write(
             self.style.SUCCESS(
-                '完成。新建权限 '
-                f'{created_p} 条；角色 administrator / content_editor / viewer '
-                '及合作公司测试角色已更新。'
+                _('Completed. Created %(count)s permissions; updated administrator/content_editor/viewer and tenant sample roles.')
+                % {'count': created_p}
             )
         )

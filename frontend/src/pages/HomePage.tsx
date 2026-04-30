@@ -14,6 +14,7 @@ import {
   Space,
   Typography,
 } from 'antd'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { apiUrl } from '../api/client'
 import { useAuth } from '../auth/useAuth'
@@ -23,27 +24,28 @@ const { Title, Paragraph, Text } = Typography
 
 const HomePage = () => {
   const { access, logout } = useAuth()
+  const { t } = useTranslation('common')
 
   const features = [
     {
       icon: <AppstoreOutlined />,
-      title: '产品与目录',
-      desc: '统一管理产品型号、分类与展示资料，支撑销售与技术支持场景。',
+      title: t('home.features.products.title'),
+      desc: t('home.features.products.desc'),
     },
     {
       icon: <RocketOutlined />,
-      title: '品牌与内容',
-      desc: '多品牌、公司介绍与联系信息集中维护，保持对外信息一致、可追溯。',
+      title: t('home.features.brand.title'),
+      desc: t('home.features.brand.desc'),
     },
     {
       icon: <SafetyCertificateOutlined />,
-      title: '权限与安全',
-      desc: '基于角色的访问控制（RBAC）与 JWT 认证，接口与操作可按权限精细拆分。',
+      title: t('home.features.security.title'),
+      desc: t('home.features.security.desc'),
     },
     {
       icon: <ApiOutlined />,
-      title: '开放 API',
-      desc: '标准 REST 接口与在线文档，便于与内部系统或合作伙伴集成。',
+      title: t('home.features.api.title'),
+      desc: t('home.features.api.desc'),
     },
   ]
 
@@ -51,12 +53,12 @@ const HomePage = () => {
     <div className="home">
       <section className="home-hero">
         <div className="home-hero-inner">
-          <span className="home-hero-badge">Achievers Automation</span>
+          <span className="home-hero-badge">{t('home.badge')}</span>
           <Title level={1} className="home-hero-title">
-            工业自动化 · 产品与内容门户
+            {t('home.title')}
           </Title>
           <Paragraph className="home-hero-subtitle">
-            面向企业与团队的统一入口：产品资料、品牌与公司内容、权限协作与开放接口，一站式支撑日常运营。
+            {t('home.subtitle')}
           </Paragraph>
           <div
             style={{
@@ -70,23 +72,23 @@ const HomePage = () => {
               <>
                 <Link to="/admin">
                   <Button type="primary" size="large">
-                    进入管理后台
+                    {t('home.actions.enterAdmin')}
                   </Button>
                 </Link>
                 <Button size="large" ghost onClick={() => logout()}>
-                  退出登录
+                  {t('home.actions.logout')}
                 </Button>
               </>
             ) : (
               <>
                 <Link to="/login">
                   <Button type="primary" size="large">
-                    登录
+                    {t('home.actions.login')}
                   </Button>
                 </Link>
                 <Link to="/register">
                   <Button size="large" ghost style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.55)' }}>
-                    注册账号
+                    {t('home.actions.register')}
                   </Button>
                 </Link>
               </>
@@ -97,10 +99,10 @@ const HomePage = () => {
 
       <div className="home-body">
         <Title level={3} className="home-section-title">
-          核心能力
+          {t('home.coreTitle')}
         </Title>
         <Paragraph type="secondary" className="home-section-desc">
-          与后端 Achievers Automation API 对齐的能力模块，可按角色逐步开放给团队成员。
+          {t('home.coreDesc')}
         </Paragraph>
 
         <Row gutter={[20, 20]}>
@@ -126,17 +128,17 @@ const HomePage = () => {
           items={[
             {
               key: 'dev',
-              label: '开发者与本地环境',
+              label: t('home.dev.title'),
               children: (
                 <Card size="small" variant="outlined" style={{ borderRadius: 8 }}>
                   <Descriptions column={{ xs: 1, sm: 1, md: 2 }} size="small">
-                    <Descriptions.Item label="前端开发地址">
+                    <Descriptions.Item label={t('home.dev.frontendUrl')}>
                       <Text code>http://localhost:3000</Text>
                     </Descriptions.Item>
-                    <Descriptions.Item label="API 前缀">
+                    <Descriptions.Item label={t('home.dev.apiPrefix')}>
                       <Text code>{apiUrl('/api/v1/')}</Text>
                     </Descriptions.Item>
-                    <Descriptions.Item label="接口文档">
+                    <Descriptions.Item label={t('home.dev.apiDocs')}>
                       <Button
                         type="link"
                         href={apiUrl('/api/docs/')}
@@ -148,18 +150,18 @@ const HomePage = () => {
                         Swagger UI
                       </Button>
                     </Descriptions.Item>
-                    <Descriptions.Item label="当前会话">
+                    <Descriptions.Item label={t('home.dev.currentSession')}>
                       {access ? (
                         <Space>
-                          <Text type="success">已登录</Text>
+                          <Text type="success">{t('home.dev.loggedIn')}</Text>
                           <Button size="small" type="link" onClick={() => logout()}>
-                            退出
+                            {t('home.actions.logout')}
                           </Button>
                         </Space>
                       ) : (
                         <Space>
-                          <Text type="secondary">未登录</Text>
-                          <Link to="/login">去登录</Link>
+                          <Text type="secondary">{t('home.dev.notLoggedIn')}</Text>
+                          <Link to="/login">{t('home.dev.goLogin')}</Link>
                         </Space>
                       )}
                     </Descriptions.Item>

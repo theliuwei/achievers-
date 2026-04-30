@@ -21,6 +21,8 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('i18n/', include('django.conf.urls.i18n')),
+    path('rosetta/', include('rosetta.urls')),
     path('api/v1/', include('api.urls')),
     path('api/v1/', include('menus.urls')),
     path('api/v1/', include('users.urls')),

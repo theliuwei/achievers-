@@ -1,6 +1,7 @@
 import axios from 'axios'
 import type { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios'
 import { ACCESS_KEY, AUTH_EXPIRED_EVENT, REFRESH_KEY } from '../auth/auth-context'
+import i18n from '../i18n'
 import { API_BASE_URL } from './client'
 import { parseApiError } from './errors'
 
@@ -50,7 +51,7 @@ http.interceptors.response.use(
       window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT))
     }
     throw new ApiRequestError(
-      data ? parseApiError(data) : error.message || '请求失败，请稍后重试',
+      data ? parseApiError(data) : error.message || i18n.t('common:apiErrors.fallback'),
       status,
       data,
     )

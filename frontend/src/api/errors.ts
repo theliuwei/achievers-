@@ -1,15 +1,17 @@
+import i18n from '../i18n'
+
 const FIELD_LABELS: Record<string, string> = {
-  code: '代码',
-  detail: '详情',
-  email: '邮箱',
-  name: '名称',
-  non_field_errors: '错误',
-  password: '密码',
-  path: '前端路由',
-  phone: '联系电话',
-  slug: 'URL 标识',
-  title: '标题',
-  username: '用户名',
+  code: i18n.t('common:apiErrors.fields.code'),
+  detail: i18n.t('common:apiErrors.fields.detail'),
+  email: i18n.t('common:apiErrors.fields.email'),
+  name: i18n.t('common:apiErrors.fields.name'),
+  non_field_errors: i18n.t('common:apiErrors.fields.nonFieldErrors'),
+  password: i18n.t('common:apiErrors.fields.password'),
+  path: i18n.t('common:apiErrors.fields.path'),
+  phone: i18n.t('common:apiErrors.fields.phone'),
+  slug: i18n.t('common:apiErrors.fields.slug'),
+  title: i18n.t('common:apiErrors.fields.title'),
+  username: i18n.t('common:apiErrors.fields.username'),
 }
 
 const fieldLabel = (field: string) => FIELD_LABELS[field] ?? field
@@ -19,7 +21,7 @@ const flattenApiError = (value: unknown, prefix?: string): string[] => {
     return []
   }
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-    return [prefix ? `${fieldLabel(prefix)}：${String(value)}` : String(value)]
+    return [prefix ? `${fieldLabel(prefix)}: ${String(value)}` : String(value)]
   }
   if (Array.isArray(value)) {
     return value.flatMap((item) => flattenApiError(item, prefix))
@@ -42,16 +44,16 @@ export const parseApiError = (data: unknown): string => {
     if (errorBody.detail != null) {
       const detailMessages = flattenApiError(errorBody.detail)
       if (detailMessages.length) {
-        return detailMessages.join('；')
+        return detailMessages.join('; ')
       }
     }
     if (errorBody.non_field_errors != null) {
       const nonFieldMessages = flattenApiError(errorBody.non_field_errors)
       if (nonFieldMessages.length) {
-        return nonFieldMessages.join('；')
+        return nonFieldMessages.join('; ')
       }
     }
   }
   const messages = flattenApiError(data)
-  return messages.length ? messages.join('；') : '请求失败，请稍后重试'
+  return messages.length ? messages.join('; ') : i18n.t('common:apiErrors.fallback')
 }

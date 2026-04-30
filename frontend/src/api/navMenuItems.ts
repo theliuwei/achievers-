@@ -4,6 +4,7 @@ import { del, get, patch, post } from './http'
 export type NavMenuItemRow = {
   id: number
   parent: number | null
+  parent_display?: string | null
   title: string
   path: string
   icon: string
@@ -12,7 +13,7 @@ export type NavMenuItemRow = {
   is_active: boolean
 }
 
-export type NavMenuItemPayload = Omit<NavMenuItemRow, 'id'>
+export type NavMenuItemPayload = Omit<NavMenuItemRow, 'id' | 'parent_display'>
 
 export const navMenuItemApi = createEntityApi<NavMenuItemRow, NavMenuItemPayload>(
   '/api/v1/nav-menu-items/',

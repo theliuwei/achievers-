@@ -8,6 +8,7 @@ import {
   ProFormText,
   ProFormTextArea,
 } from '@ant-design/pro-components'
+import i18n from '../../i18n'
 import type { EntityFieldConfig, EntityRecord } from './types'
 
 export const optionsToValueEnum = (options?: EntityFieldConfig['options']) => {
@@ -26,12 +27,16 @@ export function renderFormItem<T extends EntityRecord>(
 ) {
   const name = field.key
   const form = field.form === false ? undefined : field.form
+  const defaultPlaceholder =
+    field.valueType === 'select'
+      ? i18n.t('common:form.placeholders.select')
+      : i18n.t('common:form.placeholders.input')
   const commonProps = {
     key: field.key,
     name,
     label: field.title,
     rules: form?.rules,
-    placeholder: form?.placeholder,
+    placeholder: form?.placeholder ?? defaultPlaceholder,
     disabled: Boolean(editing && form?.readonlyOnEdit),
     fieldProps: form?.componentProps as never,
   }
@@ -40,7 +45,17 @@ export function renderFormItem<T extends EntityRecord>(
     case 'textarea':
       return <ProFormTextArea {...commonProps} />
     case 'select':
-      return <ProFormSelect {...commonProps} options={field.options ?? []} />
+      return (
+        <ProFormSelect
+          {...commonProps}
+          options={field.options ?? []}
+          request={
+            form?.request
+              ? (async (params) => form.request?.(String(params.keyWords ?? '')) ?? [])
+              : undefined
+          }
+        />
+      )
     case 'switch':
       return <ProFormSwitch {...commonProps} />
     case 'digit':

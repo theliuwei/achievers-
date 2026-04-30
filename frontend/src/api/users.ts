@@ -22,6 +22,7 @@ export interface UserRow {
   is_superuser: boolean
   user_kind: 'platform' | 'tenant'
   default_tenant: number | null
+  default_tenant_display?: string | null
   roles: UserRoleBrief[]
 }
 

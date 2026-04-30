@@ -1,5 +1,6 @@
 import {
   AlipayCircleOutlined,
+  CloseOutlined,
   DingdingOutlined,
   TaobaoCircleOutlined,
   UploadOutlined,
@@ -14,14 +15,15 @@ import {
   Input,
   List,
   Menu,
-  Modal,
   Select,
+  Space,
   Switch,
   Tag,
   Typography,
   Upload,
 } from 'antd'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import {
   changePassword,
@@ -50,22 +52,15 @@ type PasswordFormValues = {
 type BindingProvider = 'taobao' | 'alipay' | 'dingtalk'
 type NotificationKind = 'userMessages' | 'systemMessages' | 'todoTasks'
 
-const genderOptions = [
-  { label: '未设置', value: '' },
-  { label: '男', value: 'male' },
-  { label: '女', value: 'female' },
-  { label: '其他', value: 'other' },
-]
-
 const maskText = (value?: string, keepStart = 3, keepEnd = 3) => {
-  if (!value) return '未设置'
+  if (!value) return '-'
   if (value.length <= keepStart + keepEnd) return value
   return `${value.slice(0, keepStart)}****${value.slice(-keepEnd)}`
 }
 
 const getDisplayName = (values: ProfileFormValues, username?: string) => {
   const fullName = [values.last_name, values.first_name].filter(Boolean).join('')
-  return fullName || username || values.email || '用户'
+  return fullName || username || values.email || 'User'
 }
 
 const initialBindingState: Record<BindingProvider, boolean> = {
@@ -81,6 +76,7 @@ const initialNotificationState: Record<NotificationKind, boolean> = {
 }
 
 const ProfilePage = () => {
+  const { t } = useTranslation('common')
   const { message } = App.useApp()
   const navigate = useNavigate()
   const [form] = Form.useForm<ProfileFormValues>()
@@ -97,6 +93,13 @@ const ProfilePage = () => {
   const formValues = Form.useWatch([], form) ?? {}
   const resolvedAvatarUrl = avatarUrl || DEFAULT_AVATAR_URL
 
+  const genderOptions = [
+    { label: t('profile.gender.unset'), value: '' },
+    { label: t('profile.gender.male'), value: 'male' },
+    { label: t('profile.gender.female'), value: 'female' },
+    { label: t('profile.gender.other'), value: 'other' },
+  ]
+
   useEffect(() => {
     if (!user) {
       return
@@ -108,9 +111,9 @@ const ProfilePage = () => {
       avatar_url: user.avatar_url ?? '',
       gender: user.gender ?? '',
       phone: user.phone ?? '',
-      country: '中国',
+      country: t('profile.countryDefault'),
     })
-  }, [form, user])
+  }, [form, t, user])
 
   const displayName = getDisplayName(formValues, user?.username)
   const avatarText = displayName.trim().slice(0, 1).toUpperCase()
@@ -127,9 +130,9 @@ const ProfilePage = () => {
         phone: values.phone?.trim(),
       })
       await refreshUser()
-      message.success('个人信息已更新')
+      message.success(t('profile.messages.profileUpdated'))
     } catch (e) {
-      message.error(e instanceof Error ? e.message : '保存失败')
+      message.error(e instanceof Error ? e.message : t('messages.submitFailed'))
     } finally {
       setSaving(false)
     }
@@ -137,11 +140,11 @@ const ProfilePage = () => {
 
   const beforeAvatarUpload = (file: File) => {
     if (!file.type.startsWith('image/')) {
-      message.error('请选择图片文件')
+      message.error(t('profile.messages.selectImage'))
       return Upload.LIST_IGNORE
     }
     if (file.size > 2 * 1024 * 1024) {
-      message.error('头像文件不能超过 2MB')
+      message.error(t('profile.messages.avatarTooLarge'))
       return Upload.LIST_IGNORE
     }
     return true
@@ -153,9 +156,9 @@ const ProfilePage = () => {
       const nextUser = await uploadAvatar(file)
       form.setFieldValue('avatar_url', nextUser.avatar_url ?? '')
       await refreshUser()
-      message.success('头像已更新')
+      message.success(t('profile.messages.avatarUpdated'))
     } catch (e) {
-      message.error(e instanceof Error ? e.message : '头像上传失败')
+      message.error(e instanceof Error ? e.message : t('profile.messages.avatarUploadFailed'))
     } finally {
       setAvatarUploading(false)
     }
@@ -169,13 +172,13 @@ const ProfilePage = () => {
         old_password: values.old_password,
         new_password: values.new_password,
       })
-      message.success('密码已更新，请重新登录')
+      message.success(t('profile.messages.passwordUpdated'))
       setPasswordModalOpen(false)
       passwordForm.resetFields()
       logout()
       navigate('/login', { replace: true })
     } catch (e) {
-      message.error(e instanceof Error ? e.message : '密码修改失败')
+      message.error(e instanceof Error ? e.message : t('profile.messages.passwordUpdateFailed'))
     } finally {
       setPasswordSaving(false)
     }
@@ -185,24 +188,24 @@ const ProfilePage = () => {
     setBindingState((current) => {
       const next = !current[provider]
       const providerName = {
-        taobao: '淘宝',
-        alipay: '支付宝',
-        dingtalk: '钉钉',
+        taobao: t('profile.binding.taobao'),
+        alipay: t('profile.binding.alipay'),
+        dingtalk: t('profile.binding.dingtalk'),
       }[provider]
-      message.success(next ? `${providerName}账号已绑定` : `${providerName}账号已解绑`)
+      message.success(next ? t('profile.messages.bindingOn', { provider: providerName }) : t('profile.messages.bindingOff', { provider: providerName }))
       return { ...current, [provider]: next }
     })
   }
 
   const toggleNotification = (kind: NotificationKind, checked: boolean) => {
     setNotificationState((current) => ({ ...current, [kind]: checked }))
-    message.success(checked ? '已开启消息通知' : '已关闭消息通知')
+    message.success(checked ? t('profile.messages.notificationOn') : t('profile.messages.notificationOff'))
   }
 
   const renderBasicSettings = () => (
     <>
       <Typography.Title level={4} style={{ marginTop: 0 }}>
-        基本设置
+        {t('profile.menu.basic')}
       </Typography.Title>
 
       <div className="profile-page-content">
@@ -214,65 +217,65 @@ const ProfilePage = () => {
         >
           <Form.Item
             name="email"
-            label="邮箱"
+            label={t('user.fields.email')}
             rules={[
-              { required: true, message: '请输入邮箱' },
-              { type: 'email', message: '请输入正确的邮箱地址' },
+              { required: true, message: t('user.validation.emailRequired') },
+              { type: 'email', message: t('profile.validation.emailInvalid') },
             ]}
           >
-            <Input placeholder="请输入邮箱" allowClear />
+            <Input placeholder={t('profile.placeholder.email')} allowClear />
           </Form.Item>
 
-          <Form.Item name="last_name" label="姓">
-            <Input placeholder="请输入姓" allowClear />
+          <Form.Item name="last_name" label={t('user.fields.lastName')}>
+            <Input placeholder={t('profile.placeholder.lastName')} allowClear />
           </Form.Item>
 
-          <Form.Item name="first_name" label="名">
-            <Input placeholder="请输入名" allowClear />
+          <Form.Item name="first_name" label={t('user.fields.firstName')}>
+            <Input placeholder={t('profile.placeholder.firstName')} allowClear />
           </Form.Item>
 
-          <Form.Item name="bio" label="个人简介">
-            <Input.TextArea rows={4} placeholder="个人简介" showCount maxLength={120} />
+          <Form.Item name="bio" label={t('profile.fields.bio')}>
+            <Input.TextArea rows={4} placeholder={t('profile.placeholder.bio')} showCount maxLength={120} />
           </Form.Item>
 
-          <Form.Item name="gender" label="性别">
+          <Form.Item name="gender" label={t('profile.fields.gender')}>
             <Select options={genderOptions} />
           </Form.Item>
 
-          <Form.Item name="country" label="国家/地区">
-            <Select options={[{ label: '中国', value: '中国' }]} />
+          <Form.Item name="country" label={t('profile.fields.countryRegion')}>
+            <Select options={[{ label: t('profile.countryDefault'), value: t('profile.countryDefault') }]} />
           </Form.Item>
 
-          <Form.Item label="所在省市">
+          <Form.Item label={t('profile.fields.provinceCity')}>
             <Input.Group compact>
               <Form.Item name="province" noStyle>
-                <Input placeholder="请选择省" style={{ width: '50%' }} />
+                <Input placeholder={t('profile.placeholder.province')} style={{ width: '50%' }} />
               </Form.Item>
               <Form.Item name="city" noStyle>
-                <Input placeholder="请选择市" style={{ width: '50%' }} />
+                <Input placeholder={t('profile.placeholder.city')} style={{ width: '50%' }} />
               </Form.Item>
             </Input.Group>
           </Form.Item>
 
-          <Form.Item name="address" label="街道地址">
-            <Input placeholder="请输入街道地址" allowClear />
+          <Form.Item name="address" label={t('profile.fields.address')}>
+            <Input placeholder={t('profile.placeholder.address')} allowClear />
           </Form.Item>
 
-          <Form.Item name="phone" label="联系电话">
-            <Input placeholder="请输入联系电话" allowClear />
+          <Form.Item name="phone" label={t('profile.fields.phone')}>
+            <Input placeholder={t('profile.placeholder.phone')} allowClear />
           </Form.Item>
 
-          <Form.Item name="avatar_url" label="头像地址">
+          <Form.Item name="avatar_url" label={t('profile.fields.avatarUrl')}>
             <Input placeholder="https://example.com/avatar.png" allowClear />
           </Form.Item>
 
           <Button type="primary" htmlType="submit" loading={saving}>
-            更新基本信息
+            {t('profile.actions.updateBasic')}
           </Button>
         </Form>
 
         <div className="profile-avatar-panel">
-          <div className="profile-avatar-title">头像</div>
+          <div className="profile-avatar-title">{t('profile.fields.avatar')}</div>
           <Avatar
             className="profile-avatar"
             size={112}
@@ -294,12 +297,12 @@ const ProfilePage = () => {
               showUploadList={false}
             >
               <Button icon={<UploadOutlined />} loading={avatarUploading}>
-                更换头像
+                {t('profile.actions.changeAvatar')}
               </Button>
             </Upload>
           </div>
           <Typography.Paragraph type="secondary" style={{ marginTop: 12 }}>
-            支持 JPG、PNG、GIF、WebP，文件大小不超过 2MB。
+            {t('profile.avatarHelp')}
           </Typography.Paragraph>
         </div>
       </div>
@@ -309,48 +312,48 @@ const ProfilePage = () => {
   const renderSecuritySettings = () => (
     <>
       <Typography.Title level={4} style={{ marginTop: 0 }}>
-        安全设置
+        {t('profile.menu.security')}
       </Typography.Title>
       <List
         className="profile-security-list"
         itemLayout="horizontal"
         dataSource={[
           {
-            title: '账户密码',
-            description: '当前密码强度：强',
+            title: t('profile.security.password'),
+            description: t('profile.security.passwordStrength'),
             action: (
               <Button type="link" onClick={() => setPasswordModalOpen(true)}>
-                修改
+                {t('profile.actions.edit')}
               </Button>
             ),
           },
           {
-            title: '密保手机',
-            description: user?.phone ? `已绑定手机：${maskText(user.phone, 3, 4)}` : '未绑定手机',
+            title: t('profile.security.securePhone'),
+            description: user?.phone ? t('profile.security.boundPhone', { value: maskText(user.phone, 3, 4) }) : t('profile.security.unboundPhone'),
             action: (
               <Button type="link" onClick={() => setActiveKey('basic')}>
-                修改
+                {t('profile.actions.edit')}
               </Button>
             ),
           },
           {
-            title: '密保问题',
-            description: '未设置密保问题，密保问题可有效保护账户安全',
-            action: <Button type="link">设置</Button>,
+            title: t('profile.security.secureQuestion'),
+            description: t('profile.security.secureQuestionDesc'),
+            action: <Button type="link">{t('profile.actions.setup')}</Button>,
           },
           {
-            title: '备用邮箱',
-            description: user?.email ? `已绑定邮箱：${maskText(user.email, 3, 8)}` : '未绑定邮箱',
+            title: t('profile.security.backupEmail'),
+            description: user?.email ? t('profile.security.boundEmail', { value: maskText(user.email, 3, 8) }) : t('profile.security.unboundEmail'),
             action: (
               <Button type="link" onClick={() => setActiveKey('basic')}>
-                修改
+                {t('profile.actions.edit')}
               </Button>
             ),
           },
           {
-            title: 'MFA 设备',
-            description: '未绑定 MFA 设备，绑定后可进行二次确认',
-            action: <Button type="link">绑定</Button>,
+            title: t('profile.security.mfaDevice'),
+            description: t('profile.security.mfaDesc'),
+            action: <Button type="link">{t('profile.actions.bind')}</Button>,
           },
         ]}
         renderItem={(item) => (
@@ -359,7 +362,7 @@ const ProfilePage = () => {
               title={
                 <span>
                   {item.title}
-                  {item.title === '账户密码' ? <Tag color="green">已保护</Tag> : null}
+                  {item.title === t('profile.security.password') ? <Tag color="green">{t('profile.security.protected')}</Tag> : null}
                 </span>
               }
               description={item.description}
@@ -368,62 +371,81 @@ const ProfilePage = () => {
         )}
       />
 
-      <Modal
-        title="修改账户密码"
-        open={passwordModalOpen}
-        confirmLoading={passwordSaving}
-        okText="保存"
-        onOk={() => void handlePasswordSubmit()}
-        onCancel={() => {
-          setPasswordModalOpen(false)
-          passwordForm.resetFields()
-        }}
-      >
-        <Form<PasswordFormValues> form={passwordForm} layout="vertical" requiredMark={false}>
-          <Form.Item
-            name="old_password"
-            label="当前密码"
-            rules={[{ required: true, message: '请输入当前密码' }]}
-          >
-            <Input.Password autoComplete="current-password" />
-          </Form.Item>
-          <Form.Item
-            name="new_password"
-            label="新密码"
-            rules={[
-              { required: true, message: '请输入新密码' },
-              { min: 8, message: '密码至少 8 位' },
-            ]}
-          >
-            <Input.Password autoComplete="new-password" />
-          </Form.Item>
-          <Form.Item
-            name="confirm_password"
-            label="确认新密码"
-            dependencies={['new_password']}
-            rules={[
-              { required: true, message: '请再次输入新密码' },
-              ({ getFieldValue }) => ({
-                validator(_, value) {
-                  if (!value || getFieldValue('new_password') === value) {
-                    return Promise.resolve()
-                  }
-                  return Promise.reject(new Error('两次输入的新密码不一致'))
-                },
-              }),
-            ]}
-          >
-            <Input.Password autoComplete="new-password" />
-          </Form.Item>
-        </Form>
-      </Modal>
+      {passwordModalOpen ? (
+        <Card
+          title={t('profile.security.changePassword')}
+          style={{ marginTop: 16 }}
+          extra={
+            <Button
+              type="text"
+              icon={<CloseOutlined />}
+              aria-label={t('actions.close')}
+              onClick={() => {
+                setPasswordModalOpen(false)
+                passwordForm.resetFields()
+              }}
+            />
+          }
+        >
+          <Form<PasswordFormValues> form={passwordForm} layout="vertical" requiredMark={false}>
+            <Form.Item
+              name="old_password"
+              label={t('profile.security.currentPassword')}
+              rules={[{ required: true, message: t('profile.validation.currentPasswordRequired') }]}
+            >
+              <Input.Password autoComplete="current-password" />
+            </Form.Item>
+            <Form.Item
+              name="new_password"
+              label={t('profile.security.newPassword')}
+              rules={[
+                { required: true, message: t('profile.validation.newPasswordRequired') },
+                { min: 8, message: t('profile.validation.passwordMinLength') },
+              ]}
+            >
+              <Input.Password autoComplete="new-password" />
+            </Form.Item>
+            <Form.Item
+              name="confirm_password"
+              label={t('profile.security.confirmPassword')}
+              dependencies={['new_password']}
+              rules={[
+                { required: true, message: t('profile.validation.confirmPasswordRequired') },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    if (!value || getFieldValue('new_password') === value) {
+                      return Promise.resolve()
+                    }
+                    return Promise.reject(new Error(t('profile.validation.passwordNotMatch')))
+                  },
+                }),
+              ]}
+            >
+              <Input.Password autoComplete="new-password" />
+            </Form.Item>
+          </Form>
+          <Space style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+            <Button
+              onClick={() => {
+                setPasswordModalOpen(false)
+                passwordForm.resetFields()
+              }}
+            >
+              {t('actions.cancel')}
+            </Button>
+            <Button type="primary" loading={passwordSaving} onClick={() => void handlePasswordSubmit()}>
+              {t('actions.confirm')}
+            </Button>
+          </Space>
+        </Card>
+      ) : null}
     </>
   )
 
   const renderBindingSettings = () => (
     <>
       <Typography.Title level={4} style={{ marginTop: 0 }}>
-        账号绑定
+        {t('profile.menu.binding')}
       </Typography.Title>
       <List
         className="profile-security-list"
@@ -432,23 +454,23 @@ const ProfilePage = () => {
           {
             key: 'taobao' as const,
             icon: <TaobaoCircleOutlined className="profile-binding-icon profile-binding-taobao" />,
-            title: '绑定淘宝',
-            boundText: '当前已绑定淘宝账号',
-            unboundText: '当前未绑定淘宝账号',
+            title: t('profile.binding.bindTaobao'),
+            boundText: t('profile.binding.boundTaobao'),
+            unboundText: t('profile.binding.unboundTaobao'),
           },
           {
             key: 'alipay' as const,
             icon: <AlipayCircleOutlined className="profile-binding-icon profile-binding-alipay" />,
-            title: '绑定支付宝',
-            boundText: '当前已绑定支付宝账号',
-            unboundText: '当前未绑定支付宝账号',
+            title: t('profile.binding.bindAlipay'),
+            boundText: t('profile.binding.boundAlipay'),
+            unboundText: t('profile.binding.unboundAlipay'),
           },
           {
             key: 'dingtalk' as const,
             icon: <DingdingOutlined className="profile-binding-icon profile-binding-dingtalk" />,
-            title: '绑定钉钉',
-            boundText: '当前已绑定钉钉账号',
-            unboundText: '当前未绑定钉钉账号',
+            title: t('profile.binding.bindDingtalk'),
+            boundText: t('profile.binding.boundDingtalk'),
+            unboundText: t('profile.binding.unboundDingtalk'),
           },
         ]}
         renderItem={(item) => {
@@ -457,7 +479,7 @@ const ProfilePage = () => {
             <List.Item
               actions={[
                 <Button type="link" onClick={() => toggleBinding(item.key)}>
-                  {isBound ? '解绑' : '绑定'}
+                  {isBound ? t('profile.actions.unbind') : t('profile.actions.bind')}
                 </Button>,
               ]}
             >
@@ -476,7 +498,7 @@ const ProfilePage = () => {
   const renderNotificationSettings = () => (
     <>
       <Typography.Title level={4} style={{ marginTop: 0 }}>
-        新消息通知
+        {t('profile.menu.notifications')}
       </Typography.Title>
       <List
         className="profile-security-list"
@@ -484,26 +506,26 @@ const ProfilePage = () => {
         dataSource={[
           {
             key: 'userMessages' as const,
-            title: '用户消息',
-            description: '其他用户的消息将以站内信的形式通知',
+            title: t('profile.notifications.userMessages'),
+            description: t('profile.notifications.userMessagesDesc'),
           },
           {
             key: 'systemMessages' as const,
-            title: '系统消息',
-            description: '系统消息将以站内信的形式通知',
+            title: t('profile.notifications.systemMessages'),
+            description: t('profile.notifications.systemMessagesDesc'),
           },
           {
             key: 'todoTasks' as const,
-            title: '待办任务',
-            description: '待办任务将以站内信的形式通知',
+            title: t('profile.notifications.todoTasks'),
+            description: t('profile.notifications.todoTasksDesc'),
           },
         ]}
         renderItem={(item) => (
           <List.Item
             actions={[
               <Switch
-                checkedChildren="开"
-                unCheckedChildren="关"
+                checkedChildren={t('profile.switch.on')}
+                unCheckedChildren={t('profile.switch.off')}
                 checked={notificationState[item.key]}
                 onChange={(checked) => toggleNotification(item.key, checked)}
               />,
@@ -538,10 +560,10 @@ const ProfilePage = () => {
           selectedKeys={[activeKey]}
           onClick={({ key }) => setActiveKey(String(key))}
           items={[
-            { key: 'basic', label: '基本设置' },
-            { key: 'security', label: '安全设置' },
-            { key: 'binding', label: '账号绑定' },
-            { key: 'notifications', label: '新消息通知' },
+            { key: 'basic', label: t('profile.menu.basic') },
+            { key: 'security', label: t('profile.menu.security') },
+            { key: 'binding', label: t('profile.menu.binding') },
+            { key: 'notifications', label: t('profile.menu.notifications') },
           ]}
         />
 

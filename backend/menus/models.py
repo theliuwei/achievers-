@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from core.models import BaseModel
 
@@ -12,36 +13,36 @@ class NavMenuItem(BaseModel):
         null=True,
         blank=True,
         related_name='children',
-        verbose_name='上级',
+        verbose_name=_('Parent'),
     )
-    title = models.CharField('标题', max_length=100)
+    title = models.CharField(_('Title'), max_length=100)
     path = models.CharField(
-        '前端路由',
+        _('Frontend Route'),
         max_length=255,
         blank=True,
-        help_text='如 /admin/products；仅作分组时留空',
+        help_text=_('For example /admin/products; leave empty for group nodes.'),
     )
     icon = models.CharField(
-        '图标',
+        _('Icon'),
         max_length=64,
         blank=True,
-        help_text='Ant Design 图标组件名，如 DashboardOutlined',
+        help_text=_('Ant Design icon component name, e.g. DashboardOutlined'),
     )
     permission_code = models.CharField(
-        '所需权限',
+        _('Required Permission'),
         max_length=128,
         blank=True,
         db_index=True,
-        help_text='对应 Permission.code；留空表示登录即可见',
+        help_text=_('Maps to Permission.code; empty means visible to authenticated users.'),
     )
-    sort_order = models.PositiveSmallIntegerField('排序', default=0)
-    is_active = models.BooleanField('启用', default=True)
+    sort_order = models.PositiveSmallIntegerField(_('Sort Order'), default=0)
+    is_active = models.BooleanField(_('Active'), default=True)
 
     class Meta:
         db_table = 'NavMenuItem'
         ordering = ['sort_order', 'id']
-        verbose_name = '导航菜单项'
-        verbose_name_plural = '导航菜单项'
+        verbose_name = _('Navigation Menu Item')
+        verbose_name_plural = _('Navigation Menu Items')
 
     def __str__(self) -> str:
         return self.title

@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react'
 import { MoonOutlined, SunOutlined } from '@ant-design/icons'
 import { Space, Switch, Typography, theme } from 'antd'
+import { useTranslation } from 'react-i18next'
 import { useAppTheme } from './app-theme-context'
 
 const { useToken } = theme
@@ -21,6 +22,7 @@ type ThemeToggleProps = {
 export const ThemeToggle = ({ className }: ThemeToggleProps) => {
   const { isDark, setColorScheme } = useAppTheme()
   const { token } = useToken()
+  const { t } = useTranslation('common')
 
   return (
     <Space
@@ -36,14 +38,16 @@ export const ThemeToggle = ({ className }: ThemeToggleProps) => {
       <Switch
         checked={isDark}
         onChange={(checked) => setColorScheme(checked ? 'dark' : 'light')}
-        aria-label={isDark ? '当前为暗黑模式，切换为明亮' : '当前为明亮模式，切换为暗黑'}
+        aria-label={
+          isDark ? t('themeToggle.aria.darkToLight') : t('themeToggle.aria.lightToDark')
+        }
       />
       <MoonOutlined
         style={{ color: isDark ? token.colorInfo : token.colorTextQuaternary }}
         aria-hidden
       />
       <Text type="secondary" style={labelStyle}>
-        {isDark ? '暗黑' : '明亮'}
+        {isDark ? t('themeToggle.dark') : t('themeToggle.light')}
       </Text>
     </Space>
   )

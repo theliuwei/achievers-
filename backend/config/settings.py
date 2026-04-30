@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 from datetime import timedelta
+from django.utils.translation import gettext_lazy as _
 
 # PyMySQL 冒充 MySQLdb；包内默认伪装为 mysqlclient 1.4.x，Django 6 要求 ≥2.2.1
 import pymysql
@@ -57,6 +58,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'debug_toolbar',               # 开发调试工具
     'ckeditor',                    # 富文本编辑器（用于 About Us 等页面）
+    'rosetta',                     # gettext 文案翻译管理
     'simple_history',              # 修改历史记录
 
     # 你的自定义 App
@@ -80,6 +82,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',   # 必须放在最前面
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -189,7 +192,23 @@ SIMPLEUI_HOME_INFO = False                # 隐藏首页右侧信息
 SIMPLEUI_ANALYSIS = False                 # 关闭使用分析
 
 # ====================== 其他基础配置 ======================
-LANGUAGE_CODE = 'zh-hans'                 # 中文界面
+LANGUAGE_CODE = 'zh-hans'                 # 默认中文
+LANGUAGES = [
+    ('en', _('English')),
+    ('zh-hans', _('Simplified Chinese')),
+    ('id', _('Indonesian')),
+    ('vi', _('Vietnamese')),
+    ('ru', _('Russian')),
+    ('de', _('German')),
+    ('fr', _('French')),
+    ('es', _('Spanish')),
+    ('it', _('Italian')),
+    ('pt', _('Portuguese')),
+    ('pl', _('Polish')),
+    ('nl', _('Dutch')),
+    ('th', _('Thai')),
+]
+LOCALE_PATHS = [BASE_DIR / 'locale']
 TIME_ZONE = 'Asia/Shanghai'
 USE_I18N = True
 USE_TZ = True

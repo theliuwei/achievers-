@@ -8,17 +8,21 @@ import AdminLayout from './layouts/AdminLayout'
 import PublicLayout from './layouts/PublicLayout'
 import ApprovalsPage from './pages/admin/ApprovalsPage'
 import CompanyManagePage from './pages/admin/CompanyManagePage'
+import ConsentLogPage from './pages/admin/ConsentLogPage'
 import CustomerManagePage from './pages/admin/CustomerManagePage'
 import DashboardPage from './pages/admin/DashboardPage'
 import InquiryManagePage from './pages/admin/InquiryManagePage'
 import MemberManagePage from './pages/admin/MemberManagePage'
 import MenuManagePage from './pages/admin/MenuManagePage'
 import ProductManagePage from './pages/admin/ProductManagePage'
+import ProductCategoryTranslationManagePage from './pages/admin/ProductCategoryTranslationManagePage'
+import ProductTranslationManagePage from './pages/admin/ProductTranslationManagePage'
 import ProfilePage from './pages/admin/ProfilePage'
 import QuotationManagePage from './pages/admin/QuotationManagePage'
 import RoleManagePage from './pages/admin/RoleManagePage'
 import SettingsPage from './pages/admin/SettingsPage'
 import UserManagePage from './pages/admin/UserManagePage'
+import VATRateManagePage from './pages/admin/VATRateManagePage'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -93,6 +97,10 @@ const App = () => (
       <Route path="settings/roles" element={<RoleManagePage />} />
       <Route path="settings/users" element={<UserManagePage />} />
       <Route path="settings/approvals" element={<ApprovalsPage />} />
+      <Route path="settings/vat" element={<VATRateManagePage />} />
+      <Route path="settings/consents" element={<ConsentLogPage />} />
+      <Route path="settings/translations/products" element={<ProductTranslationManagePage />} />
+      <Route path="settings/translations/categories" element={<ProductCategoryTranslationManagePage />} />
     </Route>
   </Routes>
 )

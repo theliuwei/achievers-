@@ -1,9 +1,10 @@
 import type { ActionModalSchemaType, SearchFieldSchema } from '../../../components/pro/types'
+import i18n from '../../../i18n'
 
 const ROLE_OPTIONS = [
-  { label: '管理员', value: 'admin' },
-  { label: '编辑', value: 'editor' },
-  { label: '只读', value: 'viewer' },
+  { label: i18n.t('common:userManage.roles.admin'), value: 'admin' },
+  { label: i18n.t('common:userManage.roles.editor'), value: 'editor' },
+  { label: i18n.t('common:userManage.roles.viewer'), value: 'viewer' },
 ]
 
 /**
@@ -13,19 +14,19 @@ const ROLE_OPTIONS = [
 export const userSearchSchema: SearchFieldSchema[] = [
   {
     name: 'keyword',
-    label: '关键词',
+    label: i18n.t('common:userManage.search.keyword'),
     componentType: 'Input',
-    componentProps: { placeholder: '用户名 / 昵称 / 邮箱' },
+    componentProps: { placeholder: i18n.t('common:userManage.search.keywordPlaceholder') },
   },
   {
     name: 'role',
-    label: '角色',
+    label: i18n.t('common:user.fields.roles'),
     componentType: 'Select',
     componentProps: { options: ROLE_OPTIONS, allowClear: true },
   },
   {
     name: 'onlyActive',
-    label: '仅看启用',
+    label: i18n.t('common:userManage.search.onlyActive'),
     componentType: 'Switch',
     colProps: { md: { span: 6 } },
     formItemProps: {
@@ -35,7 +36,7 @@ export const userSearchSchema: SearchFieldSchema[] = [
   },
   {
     name: 'attachment',
-    label: '附件（演示 Upload）',
+    label: i18n.t('common:userManage.search.attachment'),
     componentType: 'Upload',
     colProps: { md: { span: 12 } },
     formItemProps: {
@@ -52,36 +53,36 @@ export const userSearchSchema: SearchFieldSchema[] = [
 export const userFormModalSchema: ActionModalSchemaType[] = [
   {
     name: 'username',
-    label: '用户名',
+    label: i18n.t('common:user.fields.username'),
     componentType: 'Input',
-    rules: [{ required: true, message: '请输入用户名' }],
-    componentProps: { placeholder: '登录名，唯一' },
+    rules: [{ required: true, message: i18n.t('common:user.validation.usernameRequired') }],
+    componentProps: { placeholder: i18n.t('common:userManage.form.usernamePlaceholder') },
   },
   {
     name: 'nickname',
-    label: '昵称',
+    label: i18n.t('common:userManage.form.nickname'),
     componentType: 'Input',
-    rules: [{ required: true, message: '请输入昵称' }],
+    rules: [{ required: true, message: i18n.t('common:userManage.form.nicknameRequired') }],
   },
   {
     name: 'email',
-    label: '邮箱',
+    label: i18n.t('common:user.fields.email'),
     componentType: 'Input',
     rules: [
-      { required: true, message: '请输入邮箱' },
-      { type: 'email', message: '邮箱格式不正确' },
+      { required: true, message: i18n.t('common:user.validation.emailRequired') },
+      { type: 'email', message: i18n.t('common:profile.validation.emailInvalid') },
     ],
   },
   {
     name: 'role',
-    label: '角色',
+    label: i18n.t('common:user.fields.roles'),
     componentType: 'Select',
-    rules: [{ required: true, message: '请选择角色' }],
+    rules: [{ required: true, message: i18n.t('common:userManage.form.roleRequired') }],
     componentProps: { options: ROLE_OPTIONS },
   },
   {
     name: 'active',
-    label: '启用账号',
+    label: i18n.t('common:userManage.form.active'),
     componentType: 'Switch',
     formItemProps: {
       valuePropName: 'checked',

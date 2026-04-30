@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 import { post } from './http'
 
 export type TokenPair = {
@@ -31,7 +32,7 @@ export const register = async (payload: RegisterPayload): Promise<RegisterSubmit
   )
   const d = data as { detail?: string; username?: string }
   return {
-    detail: d.detail ?? '注册申请已提交',
+    detail: d.detail ?? i18n.t('common:register.messages.submitted'),
     username: d.username ?? '',
   }
 }

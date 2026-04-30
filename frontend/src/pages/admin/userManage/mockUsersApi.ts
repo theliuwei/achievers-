@@ -1,6 +1,7 @@
 import type { ProTableRequestParams, ProTableRequestResult } from '../../../components/pro/types'
 import type { UserListSearchParams, UserRow, UserFormValues } from './types'
 import type { SorterResult } from 'antd/es/table/interface'
+import i18n from '../../../i18n'
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
@@ -99,7 +100,7 @@ function applySorter(
     if (vb == null) {
       return -1
     }
-    return String(va).localeCompare(String(vb), 'zh-CN') * dir
+    return String(va).localeCompare(String(vb), i18n.language) * dir
   })
 }
 
@@ -119,7 +120,7 @@ export async function mockFetchUserPage(
 export async function mockCreateUser(values: UserFormValues): Promise<UserRow> {
   await delay(200)
   if (mockStore.some((u) => u.username === values.username)) {
-    throw new Error('用户名已存在')
+    throw new Error(i18n.t('common:userManage.errors.usernameExists'))
   }
   const row: UserRow = {
     id: String(++seq),
@@ -138,11 +139,11 @@ export async function mockUpdateUser(values: UserFormValues): Promise<UserRow> {
   await delay(200)
   const id = values.id
   if (!id) {
-    throw new Error('缺少 id')
+    throw new Error(i18n.t('common:userManage.errors.missingId'))
   }
   const idx = mockStore.findIndex((u) => u.id === id)
   if (idx === -1) {
-    throw new Error('用户不存在')
+    throw new Error(i18n.t('common:userManage.errors.userNotFound'))
   }
   const prev = mockStore[idx]
   const next: UserRow = {
@@ -174,7 +175,7 @@ export async function mockImportUsers(file: File): Promise<{ imported: number }>
     {
       id: String(++seq),
       username: `imported_${stamp}`,
-      nickname: '导入用户 A',
+      nickname: i18n.t('common:userManage.import.userA'),
       email: `import_a_${stamp}@example.com`,
       role: 'editor',
       status: 'active',
@@ -183,7 +184,7 @@ export async function mockImportUsers(file: File): Promise<{ imported: number }>
     {
       id: String(++seq),
       username: `imported_b_${stamp}`,
-      nickname: '导入用户 B',
+      nickname: i18n.t('common:userManage.import.userB'),
       email: `import_b_${stamp}@example.com`,
       role: 'viewer',
       status: 'active',

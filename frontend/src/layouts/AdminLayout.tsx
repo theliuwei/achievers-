@@ -4,7 +4,6 @@
  */
 import {
   BellOutlined,
-  GlobalOutlined,
   HomeOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
@@ -28,8 +27,10 @@ import {
   Typography,
 } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { DEFAULT_AVATAR_URL } from '../api/me'
+import { LanguageSwitcher } from '../components/i18n/LanguageSwitcher'
 import type { NavMenuNode } from '../api/navMenu'
 import { fetchNavMenu } from '../api/navMenu'
 import { useAuth } from '../auth/useAuth'
@@ -39,20 +40,48 @@ import './AdminLayout.css'
 
 const { Header, Sider, Content, Footer } = Layout
 
-const toAntdMenuItems = (nodes: NavMenuNode[]): MenuProps['items'] =>
+const MENU_I18N_KEY_BY_PATH: Record<string, string> = {
+  '/admin': 'menuNav.dashboard',
+  '/admin/companies': 'menuNav.companies',
+  '/admin/members': 'menuNav.members',
+  '/admin/products': 'menuNav.products',
+  '/admin/inquiries': 'menuNav.inquiries',
+  '/admin/customers': 'menuNav.customers',
+  '/admin/quotations': 'menuNav.quotations',
+  '/admin/settings/menus': 'menuNav.settingsMenus',
+  '/admin/settings/roles': 'menuNav.settingsRoles',
+  '/admin/settings/users': 'menuNav.settingsUsers',
+  '/admin/settings/approvals': 'menuNav.settingsApprovals',
+  '/admin/settings/vat': 'menuNav.settingsVat',
+  '/admin/settings/consents': 'menuNav.settingsConsents',
+}
+
+const MENU_GROUP_I18N_KEY_BY_TITLE: Record<string, string> = {
+  系统设置: 'menuNav.settingsGroup',
+}
+
+const resolveMenuTitle = (node: NavMenuNode, t: (key: string) => string) => {
+  const key = (node.path && MENU_I18N_KEY_BY_PATH[node.path]) || MENU_GROUP_I18N_KEY_BY_TITLE[node.title]
+  return key ? t(key) : node.title
+}
+
+const toAntdMenuItems = (
+  nodes: NavMenuNode[],
+  t: (key: string) => string,
+): MenuProps['items'] =>
   nodes.map((n) => ({
     key: n.key,
     icon: renderMenuIcon(n.icon),
-    label: n.title,
-    children: n.children?.length ? toAntdMenuItems(n.children) : undefined,
+    label: resolveMenuTitle(n, t),
+    children: n.children?.length ? toAntdMenuItems(n.children, t) : undefined,
   }))
 
-const getDisplayName = (user: ReturnType<typeof useAuth>['user']) => {
+const getDisplayName = (user: ReturnType<typeof useAuth>['user'], fallbackText: string, userText: string) => {
   if (!user) {
-    return '未登录'
+    return fallbackText
   }
   const fullName = [user.last_name, user.first_name].filter(Boolean).join('')
-  return fullName || user.username || user.email || '用户'
+  return fullName || user.username || user.email || userText
 }
 
 const getAvatarText = (name: string) => {
@@ -67,6 +96,7 @@ const AdminLayout = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { token } = theme.useToken()
+  const { t } = useTranslation('common')
 
   const [navLoading, setNavLoading] = useState(true)
   const [navTree, setNavTree] = useState<NavMenuNode[]>([])
@@ -82,12 +112,12 @@ const AdminLayout = () => {
       const data = await fetchNavMenu()
       setNavTree(Array.isArray(data) ? data : [])
     } catch (e) {
-      message.error(e instanceof Error ? e.message : '加载菜单失败')
+      message.error(e instanceof Error ? e.message : t('adminLayout.messages.loadMenuFailed'))
       setNavTree([])
     } finally {
       setNavLoading(false)
     }
-  }, [access, message])
+  }, [access, message, t])
 
   useEffect(() => {
     // 挂载时向后端拉取菜单；状态更新在 loadNavMenu 的异步流程中完成
@@ -116,7 +146,7 @@ const AdminLayout = () => {
     return []
   }, [trail, location.pathname])
 
-  const menuItems = useMemo(() => toAntdMenuItems(navTree), [navTree])
+  const menuItems = useMemo(() => toAntdMenuItems(navTree, t), [navTree, t])
 
   const onMenuClick: MenuProps['onClick'] = ({ key }) => {
     if (key.startsWith('/')) {
@@ -128,18 +158,18 @@ const AdminLayout = () => {
     {
       key: 'profile',
       icon: <UserOutlined />,
-      label: '个人中心',
+      label: t('adminLayout.profile'),
     },
     {
       key: 'portal',
       icon: <HomeOutlined />,
-      label: <Link to="/">返回门户首页</Link>,
+      label: <Link to="/">{t('adminLayout.backToPortal')}</Link>,
     },
     { type: 'divider' },
     {
       key: 'logout',
       icon: <LogoutOutlined />,
-      label: '退出登录',
+      label: t('adminLayout.logout'),
       danger: true,
     },
   ]
@@ -157,7 +187,7 @@ const AdminLayout = () => {
 
   const breadcrumbItems = useMemo(() => {
     const root = {
-      title: <Link to="/admin">首页</Link>,
+      title: <Link to="/admin">{t('adminLayout.home')}</Link>,
     }
     if (trail?.length) {
       return [
@@ -165,21 +195,19 @@ const AdminLayout = () => {
         ...trail.map((n, i) => ({
           title:
             i === trail.length - 1 ? (
-              n.title
+              resolveMenuTitle(n, t)
             ) : n.path ? (
-              <Link to={n.path}>{n.title}</Link>
+              <Link to={n.path}>{resolveMenuTitle(n, t)}</Link>
             ) : (
-              n.title
+              resolveMenuTitle(n, t)
             ),
         })),
       ]
     }
     return [root]
-  }, [trail])
+  }, [trail, t])
 
-  const fallbackTitle = location.pathname === '/admin/account/profile' ? '个人中心' : '工作台'
-  const pageTitle = trail?.length ? trail[trail.length - 1].title : fallbackTitle
-  const displayName = getDisplayName(user)
+  const displayName = getDisplayName(user, t('adminLayout.notLoggedIn'), t('adminLayout.user'))
   const avatarText = getAvatarText(displayName)
   const avatarUrl = user?.avatar_url || DEFAULT_AVATAR_URL
 
@@ -208,11 +236,11 @@ const AdminLayout = () => {
             <div style={{ padding: '16px 12px' }}>
               <Empty
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description="暂无导航数据。请在后端 Django Admin（导航菜单项）配置，并执行 seed 命令初始化。"
+                description={t('adminLayout.emptyMenu')}
                 styles={{ description: { color: token.colorTextSecondary } }}
               />
               <Button type="link" block onClick={() => void loadNavMenu()}>
-                重新加载
+                {t('actions.refresh')}
               </Button>
             </div>
           ) : (
@@ -245,12 +273,15 @@ const AdminLayout = () => {
                   setCollapsed((c) => !c)
                 }
               }}
-              aria-label={collapsed ? '展开侧边栏' : '收起侧边栏'}
+              aria-label={
+                collapsed ? t('adminLayout.expandSidebar') : t('adminLayout.collapseSidebar')
+              }
             >
               {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             </span>
           </div>
           <Space size="middle" align="center" className="admin-header-actions">
+            <LanguageSwitcher />
             <SearchOutlined />
             <BellOutlined />
             <Dropdown
@@ -272,16 +303,12 @@ const AdminLayout = () => {
                 </Typography.Text>
               </Space>
             </Dropdown>
-            <GlobalOutlined />
           </Space>
         </Header>
         <Content>
           <div className="admin-content-wrap">
             <div className="admin-page-header">
               <Breadcrumb items={breadcrumbItems} />
-              <Typography.Title level={4} style={{ margin: '12px 0 0' }}>
-                {pageTitle}
-              </Typography.Title>
             </div>
             <Outlet />
           </div>

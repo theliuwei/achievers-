@@ -1,0 +1,523 @@
+{
+  "language": "Idioma",
+  "languageName": "Español",
+  "actions": {
+    "confirm": "Confirmar",
+    "cancel": "Cancelar",
+    "clear": "Limpiar",
+    "search": "Buscar",
+    "reset": "Restablecer",
+    "close": "Cerrar",
+    "refresh": "Actualizar"
+  },
+  "messages": {
+    "saveSuccess": "Guardado correctamente",
+    "createSuccess": "Creado correctamente",
+    "submitFailed": "Error al enviar, inténtalo de nuevo más tarde",
+    "deleteSuccess": "Eliminado correctamente",
+    "deleteFailed": "Error al eliminar, inténtalo de nuevo más tarde"
+  },
+  "adminTable": {
+    "actions": "Acciones",
+    "edit": "Editar",
+    "create": "Crear",
+    "delete": "Eliminar",
+    "confirmDeleteTitle": "Confirmar eliminación",
+    "confirmDeleteContent": "Se eliminarán {{count}} registros. ¿Continuar?",
+    "backToList": "Volver a la lista",
+    "selected": "Seleccionado",
+    "items": "elementos"
+  },
+  "common": { "listTitle": "Lista", "yes": "Sí", "no": "No", "unbound": "Sin asignar" },
+  "fields": {
+    "id": "ID",
+    "createdAt": "Creado en",
+    "updatedAt": "Actualizado en",
+    "sortOrder": "Orden"
+  },
+  "status": {
+    "label": "Estado",
+    "enabled": "Activo",
+    "disabled": "Inactivo"
+  },
+  "permission": {
+    "deniedTitle": "Sin acceso",
+    "deniedDesc": "No tienes permiso para ver esta página."
+  },
+  "adminLayout": {
+    "home": "Inicio",
+    "profile": "Perfil",
+    "backToPortal": "Volver al portal",
+    "logout": "Cerrar sesión",
+    "notLoggedIn": "No conectado",
+    "user": "Usuario",
+    "emptyMenu": "No hay datos de menú. Configura NavMenuItem en Django Admin y ejecuta seed.",
+    "expandSidebar": "Expandir barra lateral",
+    "collapseSidebar": "Colapsar barra lateral",
+    "messages": {
+      "loadMenuFailed": "Error al cargar menú"
+    }
+  },
+  "dashboard": {
+    "title": "Panel",
+    "description": "Panel SaaS para equipos de comercio exterior para gestionar empresas, miembros, productos, consultas, clientes y cotizaciones.",
+    "quickAccess": "Acceso rápido",
+    "todayOps": "Operación de hoy",
+    "responseRate": "Tasa de respuesta en 24h",
+    "profileCompleteness": "Completitud de fichas de producto",
+    "portalLabel": "Portal: ",
+    "backToSite": "Volver al sitio",
+    "metrics": {
+      "tenants": "Empresas",
+      "members": "Miembros activos",
+      "inquiries": "Consultas del mes",
+      "quoteRate": "Tasa de cierre"
+    },
+    "links": {
+      "companies": "Gestión de empresas",
+      "members": "Gestión de miembros",
+      "products": "Gestión de productos",
+      "inquiries": "Gestión de consultas",
+      "customers": "Gestión de clientes",
+      "quotations": "Gestión de cotizaciones"
+    }
+  },
+  "settings": {
+    "title": "Configuración del sistema",
+    "description": "Elige el color primario de la interfaz. Se sincroniza con Ant Design y estilos personalizados. Restablecer usa VITE_THEME_PRIMARY.",
+    "themeColor": "Color del tema",
+    "colorPicker": "Selector de color",
+    "quickPresets": "Preajustes rápidos",
+    "resetDefaultColor": "Restablecer color predeterminado"
+  },
+  "company": {
+    "actions": { "create": "Crear empresa", "edit": "Editar empresa" },
+    "fields": {
+      "name": "Nombre de empresa",
+      "code": "Código de empresa",
+      "address": "Dirección",
+      "contactName": "Contacto",
+      "contactPhone": "Teléfono",
+      "contactEmail": "Correo",
+      "primaryAdmin": "Administrador principal",
+      "subscriptionStart": "Inicio de suscripción",
+      "subscriptionExpire": "Vence suscripción",
+      "maxMembers": "Límite de miembros",
+      "activeMembers": "Miembros activos",
+      "storageQuotaMb": "Cuota de almacenamiento (MB)",
+      "storageUsedMb": "Uso de almacenamiento (MB)",
+      "lockReason": "Motivo de bloqueo"
+    },
+    "validation": {
+      "nameRequired": "Ingrese nombre de empresa",
+      "codeRequired": "Ingrese código de empresa",
+      "maxMembersRequired": "Ingrese límite de miembros",
+      "storageQuotaRequired": "Ingrese cuota de almacenamiento",
+      "storageUsedRequired": "Ingrese almacenamiento usado",
+      "statusRequired": "Seleccione estado"
+    },
+    "status": { "expired": "Vencido" }
+  },
+  "member": {
+    "actions": { "create": "Crear miembro", "edit": "Editar miembro" },
+    "fields": {
+      "tenant": "Empresa",
+      "user": "Usuario",
+      "title": "Cargo/Nota",
+      "department": "Departamento",
+      "reportsTo": "Jefe directo",
+      "status": "Estado de miembro",
+      "invitedBy": "Invitado por",
+      "roles": "Roles"
+    },
+    "validation": {
+      "tenantRequired": "Seleccione empresa",
+      "userRequired": "Seleccione usuario",
+      "statusRequired": "Seleccione estado de miembro"
+    },
+    "status": { "invited": "Invitado", "active": "Activo", "suspended": "Suspendido" }
+  },
+  "product": {
+    "actions": { "create": "Crear producto", "edit": "Editar producto" },
+    "fields": {
+      "sku": "SKU/Modelo",
+      "name": "Nombre del producto",
+      "slug": "Slug URL",
+      "category": "Categoría",
+      "originCountry": "País de origen",
+      "summary": "Resumen",
+      "externalId": "ID externo"
+    },
+    "validation": {
+      "nameRequired": "Ingrese nombre del producto",
+      "slugRequired": "Ingrese slug URL",
+      "categoryRequired": "Seleccione categoría",
+      "statusRequired": "Seleccione estado"
+    },
+    "status": { "draft": "Borrador", "active": "Activo", "archived": "Archivado" }
+  },
+  "customer": {
+    "actions": { "create": "Crear cliente", "edit": "Editar cliente" },
+    "fields": {
+      "tenant": "Empresa",
+      "name": "Nombre del cliente",
+      "companyName": "Empresa del cliente",
+      "country": "País",
+      "email": "Correo",
+      "phone": "Teléfono",
+      "whatsapp": "WhatsApp",
+      "source": "Origen",
+      "level": "Nivel",
+      "owner": "Responsable"
+    },
+    "validation": {
+      "tenantRequired": "Seleccione empresa",
+      "nameRequired": "Ingrese nombre del cliente",
+      "levelRequired": "Seleccione nivel del cliente"
+    },
+    "level": { "normal": "Normal", "important": "Importante" }
+  },
+  "inquiry": {
+    "actions": { "create": "Crear consulta", "edit": "Editar consulta" },
+    "fields": {
+      "tenant": "Empresa",
+      "customer": "Cliente",
+      "subject": "Asunto",
+      "productName": "Producto",
+      "country": "País",
+      "source": "Origen",
+      "assignee": "Responsable"
+    },
+    "validation": {
+      "tenantRequired": "Seleccione empresa",
+      "subjectRequired": "Ingrese asunto",
+      "statusRequired": "Seleccione estado"
+    },
+    "status": {
+      "new": "Nueva",
+      "contacted": "Contactada",
+      "quoted": "Cotizada",
+      "won": "Ganada",
+      "invalid": "Inválida"
+    },
+    "defaults": { "sourceWebsite": "Sitio web" }
+  },
+  "quotation": {
+    "actions": { "create": "Crear cotización", "edit": "Editar cotización" },
+    "fields": {
+      "tenant": "Empresa",
+      "quoteNo": "Nro. cotización",
+      "customer": "Cliente",
+      "inquiry": "Consulta",
+      "currency": "Moneda",
+      "totalAmount": "Importe total",
+      "tradeTerm": "Término comercial",
+      "validUntil": "Válida hasta",
+      "owner": "Responsable"
+    },
+    "validation": {
+      "tenantRequired": "Seleccione empresa",
+      "quoteNoRequired": "Ingrese número de cotización",
+      "statusRequired": "Seleccione estado"
+    },
+    "status": {
+      "draft": "Borrador",
+      "sent": "Enviada",
+      "confirmed": "Confirmada",
+      "won": "Ganada",
+      "lost": "Perdida"
+    }
+  },
+  "menu": {
+    "actions": { "create": "Crear menú", "edit": "Editar menú" },
+    "fields": {
+      "title": "Título",
+      "path": "Ruta",
+      "parent": "Menú padre",
+      "icon": "Icono",
+      "permissionCode": "Código de permiso"
+    },
+    "validation": {
+      "titleRequired": "Ingrese título del menú",
+      "pathPlaceholder": "ej. /admin/products; vacío para grupos",
+      "parentPlaceholder": "Vacío para menú raíz",
+      "sortRequired": "Ingrese orden",
+      "statusRequired": "Seleccione estado"
+    }
+  },
+  "role": {
+    "actions": { "create": "Crear rol", "edit": "Editar rol" },
+    "fields": {
+      "code": "Código",
+      "name": "Nombre",
+      "description": "Descripción",
+      "dataScope": "Alcance de datos",
+      "permissions": "Permisos",
+      "isSystem": "Integrado"
+    },
+    "validation": {
+      "codeRequired": "Ingrese código de rol",
+      "nameRequired": "Ingrese nombre de rol",
+      "scopeRequired": "Seleccione alcance de datos",
+      "statusRequired": "Seleccione estado",
+      "systemRequired": "Seleccione opción integrada"
+    },
+    "scope": {
+      "own": "Datos propios",
+      "department": "Departamento/Subordinados",
+      "tenant": "Todos los datos de empresa",
+      "all": "Todos los datos de plataforma"
+    }
+  },
+  "user": {
+    "actions": { "create": "Crear usuario", "edit": "Editar usuario" },
+    "fields": {
+      "username": "Usuario",
+      "email": "Correo",
+      "password": "Contraseña",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "userKind": "Tipo de usuario",
+      "isStaff": "Acceso admin",
+      "defaultTenant": "Empresa por defecto",
+      "roles": "Roles"
+    },
+    "validation": {
+      "usernameRequired": "Ingrese usuario",
+      "emailRequired": "Ingrese correo",
+      "passwordPlaceholder": "En edición, vacío para no cambiar contraseña",
+      "userKindRequired": "Seleccione tipo de usuario",
+      "statusRequired": "Seleccione estado",
+      "isStaffRequired": "Seleccione permiso de acceso admin"
+    },
+    "kind": {
+      "platform": "Operador de plataforma",
+      "tenant": "Usuario de empresa",
+      "platformShort": "Plataforma",
+      "tenantShort": "Empresa"
+    }
+  },
+  "approval": {
+    "tenantApplication": "Aprobación de empresas",
+    "userRegistration": "Aprobación de usuarios",
+    "actions": { "approve": "Aprobar", "reject": "Rechazar" },
+    "status": { "pending": "Pendiente", "approved": "Aprobada", "rejected": "Rechazada" },
+    "fields": {
+      "appliedAt": "Fecha de solicitud",
+      "reviewedAt": "Fecha de revisión",
+      "rejectReason": "Motivo de rechazo",
+      "adminUsername": "Usuario administrador",
+      "adminEmail": "Correo administrador",
+      "storageMb": "Almacenamiento (MB)"
+    },
+    "messages": {
+      "userApproved": "Registro de usuario aprobado",
+      "userRejected": "Registro de usuario rechazado",
+      "tenantApproved": "Solicitud de empresa aprobada",
+      "tenantRejected": "Solicitud de empresa rechazada",
+      "reviewRejectReason": "Rechazado por revisión operativa"
+    }
+  },
+  "business": {
+    "listSuffix": " Lista",
+    "monthlyGoalProgress": "Avance del objetivo mensual",
+    "operationTips": "Consejos operativos",
+    "nextStep": "Siguiente paso",
+    "defaultNextStep": "Completa los datos base y luego integra APIs reales.",
+    "quickActions": "Acciones rápidas",
+    "totalCount": "Total {{count}} elementos"
+  },
+  "vat": {
+    "listTitle": "Tasas VAT",
+    "actions": { "create": "Crear tasa VAT", "edit": "Editar tasa VAT" },
+    "fields": {
+      "countryCode": "Código país",
+      "name": "Nombre",
+      "rate": "Tasa (%)",
+      "priceMode": "Modo de precio",
+      "effectiveFrom": "Vigente desde",
+      "effectiveTo": "Vigente hasta"
+    },
+    "priceMode": { "inclusive": "Impuesto incluido", "exclusive": "Impuesto excluido" },
+    "validation": {
+      "countryRequired": "Ingrese código país",
+      "nameRequired": "Ingrese nombre VAT",
+      "rateRequired": "Ingrese tasa VAT",
+      "effectiveFromRequired": "Seleccione fecha de inicio",
+      "statusRequired": "Seleccione estado"
+    }
+  },
+  "consent": {
+    "listTitle": "Registros de consentimiento",
+    "fields": {
+      "tenant": "Empresa",
+      "user": "Usuario",
+      "type": "Tipo de consentimiento",
+      "action": "Acción",
+      "policyVersion": "Versión de política",
+      "ipAddress": "IP",
+      "userAgent": "User Agent"
+    },
+    "types": {
+      "cookie": "Cookie",
+      "privacyPolicy": "Política de privacidad",
+      "marketing": "Marketing",
+      "terms": "Términos"
+    },
+    "actions": {
+      "accepted": "Aceptado",
+      "revoked": "Revocado",
+      "updated": "Actualizado"
+    }
+  },
+  "profile": {
+    "countryDefault": "China",
+    "avatarHelp": "Admite JPG, PNG, GIF, WebP. Tamaño máximo 2MB.",
+    "menu": {
+      "basic": "Ajustes básicos",
+      "security": "Seguridad",
+      "binding": "Vinculación",
+      "notifications": "Notificaciones"
+    },
+    "fields": {
+      "bio": "Biografía",
+      "gender": "Género",
+      "countryRegion": "País/Región",
+      "provinceCity": "Provincia/Ciudad",
+      "address": "Dirección",
+      "phone": "Teléfono",
+      "avatarUrl": "URL del avatar",
+      "avatar": "Avatar"
+    },
+    "placeholder": {
+      "email": "Ingrese correo",
+      "lastName": "Ingrese apellido",
+      "firstName": "Ingrese nombre",
+      "bio": "Biografía",
+      "province": "Seleccione provincia",
+      "city": "Seleccione ciudad",
+      "address": "Ingrese dirección",
+      "phone": "Ingrese teléfono"
+    },
+    "gender": {
+      "unset": "Sin definir",
+      "male": "Hombre",
+      "female": "Mujer",
+      "other": "Otro"
+    },
+    "actions": {
+      "updateBasic": "Actualizar información",
+      "changeAvatar": "Cambiar avatar",
+      "setup": "Configurar",
+      "bind": "Vincular",
+      "unbind": "Desvincular",
+      "edit": "Editar"
+    },
+    "messages": {
+      "profileUpdated": "Perfil actualizado",
+      "selectImage": "Seleccione una imagen",
+      "avatarTooLarge": "El avatar debe ser <= 2MB",
+      "avatarUpdated": "Avatar actualizado",
+      "avatarUploadFailed": "Falló la carga del avatar",
+      "passwordUpdated": "Contraseña actualizada, vuelve a iniciar sesión",
+      "passwordUpdateFailed": "Falló la actualización de contraseña",
+      "bindingOn": "Cuenta de {{provider}} vinculada",
+      "bindingOff": "Cuenta de {{provider}} desvinculada",
+      "notificationOn": "Notificaciones activadas",
+      "notificationOff": "Notificaciones desactivadas"
+    },
+    "validation": {
+      "emailInvalid": "Ingrese un correo válido",
+      "currentPasswordRequired": "Ingrese contraseña actual",
+      "newPasswordRequired": "Ingrese nueva contraseña",
+      "passwordMinLength": "La contraseña debe tener al menos 8 caracteres",
+      "confirmPasswordRequired": "Confirme la nueva contraseña",
+      "passwordNotMatch": "Las contraseñas no coinciden"
+    },
+    "security": {
+      "password": "Contraseña",
+      "passwordStrength": "Fortaleza actual: Fuerte",
+      "securePhone": "Teléfono seguro",
+      "boundPhone": "Teléfono vinculado: {{value}}",
+      "unboundPhone": "Sin teléfono vinculado",
+      "secureQuestion": "Pregunta de seguridad",
+      "secureQuestionDesc": "No configurada. Ayuda a proteger la cuenta.",
+      "backupEmail": "Correo de respaldo",
+      "boundEmail": "Correo vinculado: {{value}}",
+      "unboundEmail": "Sin correo vinculado",
+      "mfaDevice": "Dispositivo MFA",
+      "mfaDesc": "Sin MFA vinculado. Vincúlalo para verificación secundaria.",
+      "protected": "Protegido",
+      "changePassword": "Cambiar contraseña",
+      "currentPassword": "Contraseña actual",
+      "newPassword": "Nueva contraseña",
+      "confirmPassword": "Confirmar contraseña"
+    },
+    "binding": {
+      "taobao": "Taobao",
+      "alipay": "Alipay",
+      "dingtalk": "DingTalk",
+      "bindTaobao": "Vincular Taobao",
+      "boundTaobao": "Taobao vinculado",
+      "unboundTaobao": "Taobao no vinculado",
+      "bindAlipay": "Vincular Alipay",
+      "boundAlipay": "Alipay vinculado",
+      "unboundAlipay": "Alipay no vinculado",
+      "bindDingtalk": "Vincular DingTalk",
+      "boundDingtalk": "DingTalk vinculado",
+      "unboundDingtalk": "DingTalk no vinculado"
+    },
+    "notifications": {
+      "userMessages": "Mensajes de usuario",
+      "userMessagesDesc": "Mensajes de otros usuarios vía notificación interna.",
+      "systemMessages": "Mensajes del sistema",
+      "systemMessagesDesc": "Mensajes del sistema vía notificación interna.",
+      "todoTasks": "Tareas pendientes",
+      "todoTasksDesc": "Tareas pendientes vía notificación interna."
+    },
+    "switch": {
+      "on": "On",
+      "off": "Off"
+    }
+  },
+  "userManage": {
+    "roles": { "admin": "Administrador", "editor": "Editor", "viewer": "Solo lectura" },
+    "search": {
+      "keyword": "Palabra clave",
+      "keywordPlaceholder": "Usuario / Apodo / Correo",
+      "onlyActive": "Solo activos",
+      "attachment": "Adjunto (demo Upload)"
+    },
+    "form": {
+      "usernamePlaceholder": "Nombre de acceso único",
+      "nickname": "Apodo",
+      "nicknameRequired": "Ingrese apodo",
+      "roleRequired": "Seleccione rol",
+      "active": "Activar cuenta"
+    },
+    "errors": {
+      "usernameExists": "El usuario ya existe",
+      "missingId": "Falta id",
+      "userNotFound": "Usuario no encontrado"
+    },
+    "import": {
+      "userA": "Usuario importado A",
+      "userB": "Usuario importado B"
+    }
+  },
+  "languages": {
+    "en": "English",
+    "zh": "简体中文",
+    "id": "Bahasa Indonesia",
+    "vi": "Tiếng Việt",
+    "ru": "Русский",
+    "de": "Deutsch",
+    "fr": "Français",
+    "es": "Español",
+    "it": "Italiano",
+    "pt": "Português",
+    "pl": "Polski",
+    "nl": "Nederlands",
+    "th": "ไทย"
+  }
+}

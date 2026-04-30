@@ -1,6 +1,7 @@
 import { LockOutlined, MailOutlined, UserOutlined } from '@ant-design/icons'
 import { App, Button, Card, Form, Input, Typography } from 'antd'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { register } from '../api/auth'
 import { useAuth } from '../auth/useAuth'
@@ -17,6 +18,7 @@ type RegisterForm = {
 const RegisterPage = () => {
   const { message } = App.useApp()
   const { access } = useAuth()
+  const { t } = useTranslation('common')
   const navigate = useNavigate()
   const location = useLocation()
   const [loading, setLoading] = useState(false)
@@ -42,35 +44,35 @@ const RegisterPage = () => {
       message.success(submitted.detail)
       navigate('/login', { replace: true })
     } catch (e) {
-      message.error(e instanceof Error ? e.message : '注册失败')
+      message.error(e instanceof Error ? e.message : t('register.messages.failed'))
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <Card style={{ width: '100%', maxWidth: 440 }} title="注册">
+    <Card style={{ width: '100%', maxWidth: 440 }} title={t('register.title')}>
       <Typography.Paragraph type="secondary" style={{ marginBottom: 16 }}>
-        提交后账号将进入待审批状态，管理员通过后方可登录。
+        {t('register.description')}
       </Typography.Paragraph>
       <Form<RegisterForm> layout="vertical" onFinish={onFinish} requiredMark={false}>
         <Form.Item
           name="username"
-          label="用户名"
-          rules={[{ required: true, message: '请输入用户名' }]}
+          label={t('register.fields.username')}
+          rules={[{ required: true, message: t('register.validation.usernameRequired') }]}
         >
           <Input
             prefix={<UserOutlined />}
-            placeholder="登录用用户名"
+            placeholder={t('register.placeholders.username')}
             autoComplete="username"
           />
         </Form.Item>
         <Form.Item
           name="email"
-          label="邮箱"
+          label={t('register.fields.email')}
           rules={[
-            { required: true, message: '请输入邮箱' },
-            { type: 'email', message: '邮箱格式不正确' },
+            { required: true, message: t('register.validation.emailRequired') },
+            { type: 'email', message: t('register.validation.emailInvalid') },
           ]}
         >
           <Input
@@ -79,58 +81,58 @@ const RegisterPage = () => {
             autoComplete="email"
           />
         </Form.Item>
-        <Form.Item name="first_name" label="名（选填）">
-          <Input placeholder="名" autoComplete="given-name" />
+        <Form.Item name="first_name" label={t('register.fields.firstNameOptional')}>
+          <Input placeholder={t('register.placeholders.firstName')} autoComplete="given-name" />
         </Form.Item>
-        <Form.Item name="last_name" label="姓（选填）">
-          <Input placeholder="姓" autoComplete="family-name" />
+        <Form.Item name="last_name" label={t('register.fields.lastNameOptional')}>
+          <Input placeholder={t('register.placeholders.lastName')} autoComplete="family-name" />
         </Form.Item>
         <Form.Item
           name="password"
-          label="密码"
+          label={t('register.fields.password')}
           rules={[
-            { required: true, message: '请设置密码' },
-            { min: 8, message: '密码至少 8 位' },
+            { required: true, message: t('register.validation.passwordRequired') },
+            { min: 8, message: t('register.validation.passwordMin') },
           ]}
           hasFeedback
         >
           <Input.Password
             prefix={<LockOutlined />}
-            placeholder="至少 8 位"
+            placeholder={t('register.placeholders.password')}
             autoComplete="new-password"
           />
         </Form.Item>
         <Form.Item
           name="password_confirm"
-          label="确认密码"
+          label={t('register.fields.passwordConfirm')}
           dependencies={['password']}
           hasFeedback
           rules={[
-            { required: true, message: '请再次输入密码' },
+            { required: true, message: t('register.validation.passwordConfirmRequired') },
             ({ getFieldValue }) => ({
               validator(_, value) {
                 if (!value || getFieldValue('password') === value) {
                   return Promise.resolve()
                 }
-                return Promise.reject(new Error('两次输入的密码不一致'))
+                return Promise.reject(new Error(t('register.validation.passwordMismatch')))
               },
             }),
           ]}
         >
           <Input.Password
             prefix={<LockOutlined />}
-            placeholder="再次输入密码"
+            placeholder={t('register.placeholders.passwordConfirm')}
             autoComplete="new-password"
           />
         </Form.Item>
         <Form.Item style={{ marginBottom: 12 }}>
           <Button type="primary" htmlType="submit" block loading={loading}>
-            注册
+            {t('register.actions.submit')}
           </Button>
         </Form.Item>
       </Form>
       <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
-        已有账号？ <Link to="/login">登录</Link>
+        {t('register.hasAccount')} <Link to="/login">{t('register.actions.login')}</Link>
       </Typography.Paragraph>
     </Card>
   )

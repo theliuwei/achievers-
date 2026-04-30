@@ -9,6 +9,7 @@ from io import StringIO
 from django.core.management import BaseCommand, CommandError, call_command
 from django.db import connection, transaction
 from django.db.migrations.recorder import MigrationRecorder
+from django.utils.translation import gettext as _
 
 USERS_TABLES = (
     'users_permission',
@@ -68,27 +69,29 @@ def _execute_ddl() -> int:
 
 
 class Command(BaseCommand):
-    help = '修复：users 0001 已记录但缺表，重建 users_* 表（不动迁移记录）'
+    help = _('Repair users_* tables when users.0001 is recorded but physical tables are missing.')
 
     def add_arguments(self, parser):
         parser.add_argument(
             '--drop-residual',
             action='store_true',
-            help='先 DROP 残留的 users_* 表，再重建（破坏性，仅用于残破开发库）',
+            help=_('Drop residual users_* tables before rebuilding (destructive, for broken dev DB only).'),
         )
 
     @transaction.atomic
     def handle(self, *args, **options):
         existing = [t for t in USERS_TABLES if _table_exists(t)]
         if 'users_user' in existing:
-            self.stdout.write(self.style.SUCCESS('users_user 已存在，无需修复。'))
+            self.stdout.write(self.style.SUCCESS(_('users_user already exists; no repair needed.')))
             return
         if existing:
             if not options['drop_residual']:
                 raise CommandError(
-                    f'存在残留表 {existing}，确认后追加 --drop-residual 自动清理重建。'
+                    _('Residual tables found %(tables)s; add --drop-residual to clean and rebuild.') % {
+                        'tables': existing
+                    }
                 )
-            self.stdout.write(f'DROP 残留表 {existing}…')
+            self.stdout.write(_('Dropping residual tables %(tables)s...') % {'tables': existing})
             with connection.cursor() as cursor:
                 if connection.vendor == 'mysql':
                     cursor.execute('SET FOREIGN_KEY_CHECKS=0')
@@ -99,16 +102,23 @@ class Command(BaseCommand):
 
         r = MigrationRecorder(connection)
         if not r.has_table():
-            raise CommandError('无 django_migrations 表。')
+            raise CommandError(_('django_migrations table does not exist.'))
         had_record = r.migration_qs.filter(
             app='users', name='0001_initial'
         ).exists()
 
-        self.stdout.write('按 sqlmigrate users 0001_initial 输出执行建表…')
+        self.stdout.write(_('Rebuilding tables using SQL from sqlmigrate users 0001_initial...'))
         n = _execute_ddl()
         if not _table_exists('users_user'):
-            raise CommandError(f'已执行 {n} 条 DDL，但仍无 users_user，请检查上方报错。')
+            raise CommandError(
+                _('Executed %(count)s DDL statements but users_user is still missing. Check errors above.')
+                % {'count': n}
+            )
         if not had_record:
             r.record_applied('users', '0001_initial')
-            self.stdout.write('已补登 users.0001_initial 为已应用。')
-        self.stdout.write(self.style.SUCCESS(f'已执行 {n} 条 DDL，users 相关表已就绪。'))
+            self.stdout.write(_('Marked users.0001_initial as applied.'))
+        self.stdout.write(
+            self.style.SUCCESS(
+                _('Executed %(count)s DDL statements; users tables are ready.') % {'count': n}
+            )
+        )

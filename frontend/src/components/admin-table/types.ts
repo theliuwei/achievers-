@@ -22,6 +22,8 @@ export interface FieldOption {
   value: string | number | boolean
 }
 
+export type FieldOptionValue = FieldOption['value']
+
 export type EntityFieldValueType =
   | 'text'
   | 'textarea'
@@ -44,6 +46,8 @@ export interface EntityFieldConfig<T extends EntityRecord = EntityRecord> {
     placeholder?: string
     readonlyOnEdit?: boolean
     componentProps?: Record<string, unknown>
+    /** 远程加载表单下拉选项；用于外键等可查询选择器。 */
+    request?: (keyword?: string) => Promise<FieldOption[]>
   }
   render?: ProColumns<T>['render']
 }

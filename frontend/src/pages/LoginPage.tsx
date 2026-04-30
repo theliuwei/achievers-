@@ -1,6 +1,7 @@
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { App, Button, Card, Form, Input, Typography } from 'antd'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { login } from '../api/auth'
 import { useAuth } from '../auth/useAuth'
@@ -13,6 +14,7 @@ type LoginForm = {
 const LoginPage = () => {
   const { message } = App.useApp()
   const { access, setTokens } = useAuth()
+  const { t } = useTranslation('common')
   const navigate = useNavigate()
   const location = useLocation()
   const [loading, setLoading] = useState(false)
@@ -29,48 +31,48 @@ const LoginPage = () => {
     try {
       const tokens = await login(values.username.trim(), values.password)
       setTokens(tokens)
-      message.success('登录成功')
+      message.success(t('login.messages.success'))
       navigate(afterAuthPath, { replace: true })
     } catch (e) {
-      message.error(e instanceof Error ? e.message : '登录失败')
+      message.error(e instanceof Error ? e.message : t('login.messages.failed'))
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <Card style={{ width: '100%', maxWidth: 400 }} title="登录">
+    <Card style={{ width: '100%', maxWidth: 400 }} title={t('login.title')}>
       <Form<LoginForm> layout="vertical" onFinish={onFinish} requiredMark={false}>
         <Form.Item
           name="username"
-          label="用户名"
-          rules={[{ required: true, message: '请输入用户名' }]}
+          label={t('login.fields.username')}
+          rules={[{ required: true, message: t('login.validation.usernameRequired') }]}
         >
           <Input
             prefix={<UserOutlined />}
-            placeholder="用户名"
+            placeholder={t('login.placeholders.username')}
             autoComplete="username"
           />
         </Form.Item>
         <Form.Item
           name="password"
-          label="密码"
-          rules={[{ required: true, message: '请输入密码' }]}
+          label={t('login.fields.password')}
+          rules={[{ required: true, message: t('login.validation.passwordRequired') }]}
         >
           <Input.Password
             prefix={<LockOutlined />}
-            placeholder="密码"
+            placeholder={t('login.placeholders.password')}
             autoComplete="current-password"
           />
         </Form.Item>
         <Form.Item style={{ marginBottom: 12 }}>
           <Button type="primary" htmlType="submit" block loading={loading}>
-            登录
+            {t('login.actions.submit')}
           </Button>
         </Form.Item>
       </Form>
       <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
-        还没有账号？ <Link to="/register">注册</Link>
+        {t('login.noAccount')} <Link to="/register">{t('login.actions.register')}</Link>
       </Typography.Paragraph>
     </Card>
   )

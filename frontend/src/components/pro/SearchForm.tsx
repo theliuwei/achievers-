@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { Button, Col, Flex, Form, Row, Space } from 'antd'
+import { useTranslation } from 'react-i18next'
 import type { SearchFormProps } from './types'
 import { renderProFormFieldControl } from './fieldControls'
 
@@ -22,6 +23,7 @@ export function SearchForm({
   style,
 }: SearchFormProps) {
   const [form] = Form.useForm()
+  const { t } = useTranslation('common')
 
   const items = useMemo(
     () =>
@@ -30,7 +32,12 @@ export function SearchForm({
         const mergedCol = { ...defaultColProps, ...colProps }
         return (
           <Col key={Array.isArray(name) ? name.join('.') : String(name)} {...mergedCol}>
-            <Form.Item name={name} label={label} rules={rules} {...formItemProps}>
+            <Form.Item
+              name={name}
+              label={label}
+              rules={rules}
+              {...formItemProps}
+            >
               {renderProFormFieldControl(field)}
             </Form.Item>
           </Col>
@@ -58,10 +65,10 @@ export function SearchForm({
           <Flex wrap="wrap" gap={8} justify="flex-end">
             <Space wrap>
               <Button type="primary" htmlType="submit">
-                查询
+                {t('actions.search')}
               </Button>
               <Button htmlType="button" onClick={handleReset}>
-                重置
+                {t('actions.reset')}
               </Button>
             </Space>
           </Flex>

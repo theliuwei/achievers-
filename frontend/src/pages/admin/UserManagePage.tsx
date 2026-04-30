@@ -1,158 +1,150 @@
 import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { Space, Tag } from 'antd'
+import { useTranslation } from 'react-i18next'
 import { AdminTablePage, type EntityFieldConfig } from '../../components/admin-table'
-import { fetchRoles } from '../../api/roles'
+import { roleOptions, searchableSelectProps, tenantOptions } from '../../api/options'
 import { fetchUsers, userApi, type UserPayload, type UserRow } from '../../api/users'
 
 type UserFormValues = UserPayload & Record<string, unknown>
 
-const activeOptions = [
-  { label: '启用', value: true },
-  { label: '停用', value: false },
-]
-
-const staffOptions = [
-  { label: '是', value: true },
-  { label: '否', value: false },
-]
-
-const userKindOptions = [
-  { label: '平台运营方', value: 'platform' },
-  { label: '企业用户', value: 'tenant' },
-]
-
 const UserManagePage = () => {
-  const { data: rolePage } = useQuery({
-    queryKey: ['roles', 'options'],
-    queryFn: () => fetchRoles({ page: 1, page_size: 200 }),
-  })
-
-  const roleOptions = useMemo(
-    () =>
-      (rolePage?.data ?? []).map((role) => ({
-        label: `${role.name}（${role.code}）`,
-        value: role.id,
-      })),
-    [rolePage],
+  const { t } = useTranslation('common')
+  const activeOptions = useMemo(
+    () => [
+      { label: t('status.enabled'), value: true },
+      { label: t('status.disabled'), value: false },
+    ],
+    [t],
   )
-
+  const staffOptions = useMemo(
+    () => [
+      { label: t('common.yes'), value: true },
+      { label: t('common.no'), value: false },
+    ],
+    [t],
+  )
+  const userKindOptions = useMemo(
+    () => [
+      { label: t('user.kind.platform'), value: 'platform' },
+      { label: t('user.kind.tenant'), value: 'tenant' },
+    ],
+    [t],
+  )
   const fields = useMemo<EntityFieldConfig<UserRow>[]>(
     () => [
-      { key: 'id', title: 'ID', valueType: 'digit', form: false, search: true, table: { width: 72 } },
+      { key: 'id', title: t('fields.id'), valueType: 'digit', form: false, search: true, table: { width: 72 } },
       {
         key: 'username',
-        title: '用户名',
+        title: t('user.fields.username'),
         valueType: 'text',
         search: true,
-        form: { rules: [{ required: true, message: '请输入用户名' }], readonlyOnEdit: true },
+        form: { rules: [{ required: true, message: t('user.validation.usernameRequired') }], readonlyOnEdit: true },
         table: { width: 140, sorter: true },
       },
       {
         key: 'email',
-        title: '邮箱',
+        title: t('user.fields.email'),
         valueType: 'text',
         search: true,
-        form: { rules: [{ required: true, message: '请输入邮箱' }] },
+        form: { rules: [{ required: true, message: t('user.validation.emailRequired') }] },
         table: { width: 220, ellipsis: true },
       },
       {
         key: 'password',
-        title: '密码',
+        title: t('user.fields.password'),
         valueType: 'text',
         table: false,
         search: false,
-        form: { placeholder: '编辑时留空表示不修改密码' },
+        form: { placeholder: t('user.validation.passwordPlaceholder') },
       },
-      { key: 'first_name', title: '名', valueType: 'text', search: true, table: { width: 120 } },
-      { key: 'last_name', title: '姓', valueType: 'text', search: true, table: { width: 120 } },
+      { key: 'first_name', title: t('user.fields.firstName'), valueType: 'text', search: true, table: { width: 120 } },
+      { key: 'last_name', title: t('user.fields.lastName'), valueType: 'text', search: true, table: { width: 120 } },
       {
         key: 'user_kind',
-        title: '身份类型',
+        title: t('user.fields.userKind'),
         valueType: 'select',
         options: userKindOptions,
         search: true,
-        form: { rules: [{ required: true, message: '请选择身份类型' }] },
+        form: { rules: [{ required: true, message: t('user.validation.userKindRequired') }] },
         table: {
           width: 120,
           render: (_, row) => (
             <Tag color={row.user_kind === 'platform' ? 'blue' : 'cyan'}>
-              {row.user_kind === 'platform' ? '平台' : '企业'}
+              {row.user_kind === 'platform' ? t('user.kind.platformShort') : t('user.kind.tenantShort')}
             </Tag>
           ),
         },
       },
       {
         key: 'is_active',
-        title: '启用',
+        title: t('status.label'),
         valueType: 'select',
         options: activeOptions,
         search: true,
-        form: { rules: [{ required: true, message: '请选择启用状态' }] },
+        form: { rules: [{ required: true, message: t('user.validation.statusRequired') }] },
         table: {
           width: 90,
           render: (_, row) => (
-            <Tag color={row.is_active ? 'green' : 'default'}>{row.is_active ? '启用' : '停用'}</Tag>
+            <Tag color={row.is_active ? 'green' : 'default'}>{row.is_active ? t('status.enabled') : t('status.disabled')}</Tag>
           ),
         },
       },
       {
         key: 'is_staff',
-        title: '后台登录',
+        title: t('user.fields.isStaff'),
         valueType: 'select',
         options: staffOptions,
         search: true,
-        form: { rules: [{ required: true, message: '请选择后台登录权限' }] },
+        form: { rules: [{ required: true, message: t('user.validation.isStaffRequired') }] },
         table: {
           width: 110,
-          render: (_, row) => <Tag color={row.is_staff ? 'blue' : 'default'}>{row.is_staff ? '是' : '否'}</Tag>,
+          render: (_, row) => <Tag color={row.is_staff ? 'blue' : 'default'}>{row.is_staff ? t('common.yes') : t('common.no')}</Tag>,
         },
       },
       {
         key: 'default_tenant',
-        title: '默认公司 ID',
-        valueType: 'digit',
-        search: true,
-        form: false,
-        table: false,
+        title: t('user.fields.defaultTenant'),
+        valueType: 'select',
+        search: { valueType: 'digit' },
+        form: { request: tenantOptions, componentProps: searchableSelectProps },
+        table: { width: 180, render: (_, row) => row.default_tenant_display || row.default_tenant || '-' },
       },
       {
         key: 'role_ids',
-        title: '角色',
+        title: t('user.fields.roles'),
         valueType: 'select',
-        options: roleOptions,
         search: false,
         table: false,
-        form: { componentProps: { mode: 'multiple', showSearch: true, optionFilterProp: 'label' } },
+        form: { request: roleOptions, componentProps: { ...searchableSelectProps, mode: 'multiple' } },
       },
       {
         key: 'roles',
-        title: '角色',
+        title: t('user.fields.roles'),
         search: false,
         form: false,
         table: {
           width: 220,
           render: (_, row) => (
             <Space wrap size={[0, 4]}>
-              {row.roles?.length ? row.roles.map((role) => <Tag key={role.id}>{role.name}</Tag>) : <Tag>未绑定</Tag>}
+              {row.roles?.length ? row.roles.map((role) => <Tag key={role.id}>{role.name}</Tag>) : <Tag>{t('common.unbound')}</Tag>}
             </Space>
           ),
         },
       },
-      { key: 'created_at', title: '创建时间', valueType: 'dateTime', form: false, search: false, table: { width: 170 } },
-      { key: 'updated_at', title: '更新时间', valueType: 'dateTime', form: false, search: false, table: { width: 170 } },
+      { key: 'created_at', title: t('fields.createdAt'), valueType: 'dateTime', form: false, search: false, table: { width: 170 } },
+      { key: 'updated_at', title: t('fields.updatedAt'), valueType: 'dateTime', form: false, search: false, table: { width: 170 } },
     ],
-    [roleOptions],
+    [activeOptions, staffOptions, t, userKindOptions],
   )
 
   return (
     <AdminTablePage<UserRow, UserFormValues>
-      listTitle="应用列表"
+      listTitle={t('common.listTitle')}
       fields={fields}
       api={{ ...userApi, list: fetchUsers }}
       rowKey="id"
-      createTitle="新增用户"
-      editTitle="编辑用户"
+      createTitle={t('user.actions.create')}
+      editTitle={t('user.actions.edit')}
       createDefaults={{ is_active: true, is_staff: false, user_kind: 'tenant', role_ids: [] }}
       recordToFormValues={(record) => ({
         ...record,

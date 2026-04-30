@@ -1,6 +1,8 @@
 import { Layout, Space, Typography, theme } from 'antd'
+import { useTranslation } from 'react-i18next'
 import { Link, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
+import { LanguageSwitcher } from '../components/i18n/LanguageSwitcher'
 import { ThemeToggle } from '../theme'
 
 const { useToken } = theme
@@ -11,6 +13,7 @@ const { Text, Link: TypoLink } = Typography
 const PublicLayout = () => {
   const { access, logout } = useAuth()
   const { token } = useToken()
+  const { t } = useTranslation('common')
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -28,27 +31,28 @@ const PublicLayout = () => {
           Achievers
         </Link>
         <Space size="middle" align="center" wrap>
+          <LanguageSwitcher />
           <ThemeToggle />
           {access ? (
             <>
               <Link to="/admin" style={{ color: token.colorLink }}>
-                管理后台
+                {t('publicLayout.admin')}
               </Link>
-              <Text style={{ color: token.colorText }}>已登录</Text>
+              <Text style={{ color: token.colorText }}>{t('publicLayout.loggedIn')}</Text>
               <TypoLink style={{ color: token.colorLink }} onClick={() => void logout()}>
-                退出
+                {t('publicLayout.logout')}
               </TypoLink>
             </>
           ) : (
             <>
               <Link to="/tenant-apply" style={{ color: token.colorLink }}>
-                公司入驻
+                {t('publicLayout.tenantApply')}
               </Link>
               <Link to="/login" style={{ color: token.colorLink }}>
-                登录
+                {t('publicLayout.login')}
               </Link>
               <Link to="/register" style={{ color: token.colorLink }}>
-                注册
+                {t('publicLayout.register')}
               </Link>
             </>
           )}

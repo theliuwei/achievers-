@@ -6,25 +6,29 @@
 from django.conf import settings
 from django.core.management import BaseCommand, CommandError, call_command
 from django.db import connection
+from django.utils.translation import gettext as _
 
 
 class Command(BaseCommand):
-    help = '【破坏性】DROP 当前数据库内所有表，再从零执行 migrate（仅限开发库）'
+    help = _('Destructive: drop all tables in current database and run migrate from scratch (development only).')
 
     def add_arguments(self, parser):
         parser.add_argument(
             '--yes',
             action='store_true',
-            help='必填确认；不加该参数则只会打印将要执行的动作。',
+            help=_('Required confirmation flag; without it this command only prints planned actions.'),
         )
 
     def handle(self, *args, **options):
         if connection.vendor != 'mysql':
-            raise CommandError('当前命令仅适配 MySQL。')
+            raise CommandError(_('This command currently supports MySQL only.'))
 
         db_name = settings.DATABASES['default']['NAME']
         self.stdout.write(self.style.WARNING(
-            f'目标数据库：{db_name}（vendor={connection.vendor}）'
+            _('Target database: %(db_name)s (vendor=%(vendor)s)') % {
+                'db_name': db_name,
+                'vendor': connection.vendor,
+            }
         ))
 
         with connection.cursor() as cursor:
@@ -32,16 +36,16 @@ class Command(BaseCommand):
             tables = [row[0] for row in cursor.fetchall()]
 
         if not tables:
-            self.stdout.write('当前数据库无表，直接执行 migrate…')
+            self.stdout.write(_('No tables found in current database. Running migrate directly...'))
         else:
-            self.stdout.write(f'即将 DROP 以下 {len(tables)} 张表：')
+            self.stdout.write(_('The following %(count)s tables will be dropped:') % {'count': len(tables)})
             for t in tables:
                 self.stdout.write(f'  - {t}')
 
         if not options['yes']:
             self.stdout.write(self.style.NOTICE(
-                '\n未加 --yes，仅 dry run；如确认无误请重新执行：'
-                '\n  python manage.py reset_database --yes'
+                _('\nMissing --yes, dry run only. Re-run to execute:')
+                + '\n  python manage.py reset_database --yes'
             ))
             return
 
@@ -52,9 +56,9 @@ class Command(BaseCommand):
                     cursor.execute(f'DROP TABLE IF EXISTS `{t}`')
                 cursor.execute('SET FOREIGN_KEY_CHECKS = 1')
             self.stdout.write(self.style.SUCCESS(
-                f'已 DROP {len(tables)} 张表。'
+                _('Dropped %(count)s tables.') % {'count': len(tables)}
             ))
 
-        self.stdout.write('开始 migrate…')
+        self.stdout.write(_('Starting migrate...'))
         call_command('migrate', interactive=False, verbosity=1)
-        self.stdout.write(self.style.SUCCESS('数据库已重置并完成迁移。'))
+        self.stdout.write(self.style.SUCCESS(_('Database reset completed and migrations applied.')))

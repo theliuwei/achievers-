@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react'
-import type { ColProps, ModalProps, RowProps, TablePaginationConfig } from 'antd'
+import type { CardProps, ColProps, RowProps, TablePaginationConfig } from 'antd'
 import type { FormItemProps, FormProps } from 'antd/es/form'
 import type { Rule } from 'antd/es/form'
 import type { ColumnsType, TableProps } from 'antd/es/table'
@@ -84,7 +84,7 @@ export interface ProTableProps<T extends object = Record<string, unknown>>
 export interface ActionModalProps<T extends Record<string, unknown> = Record<string, unknown>> {
   open: boolean
   onClose: () => void
-  /** 弹窗标题（可与业务状态联动，例如 `editing ? '编辑用户' : '新增用户'`） */
+  /** 表单卡片标题（可与业务状态联动，例如 `editing ? '编辑用户' : '新增用户'`） */
   title: string
   schema: ActionModalSchemaType[]
   /** 编辑时的初始数据；不传或传 `undefined` 为新增模式 */
@@ -95,8 +95,8 @@ export interface ActionModalProps<T extends Record<string, unknown> = Record<str
   api: (values: T) => Promise<unknown>
   /** 提交成功提示，默认按新增/编辑文案 */
   successMessage?: string
-  /** 透传 Modal（已占用 open、title、onOk、onCancel、confirmLoading、afterClose） */
-  modalProps?: Omit<ModalProps, 'open' | 'title' | 'onOk' | 'onCancel' | 'confirmLoading' | 'afterClose'>
+  /** 透传外层 Card（已占用 title、extra） */
+  cardProps?: Omit<CardProps, 'title' | 'extra'>
   /** 透传 Form（form、initialValues 由组件接管） */
   formProps?: Omit<FormProps, 'form' | 'initialValues' | 'onFinish' | 'children'>
   /** 表单栅格 gutter */

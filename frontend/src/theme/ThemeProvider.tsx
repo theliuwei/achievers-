@@ -1,6 +1,19 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { ConfigProvider, theme } from 'antd'
+import deDE from 'antd/locale/de_DE'
+import enUS from 'antd/locale/en_US'
+import esES from 'antd/locale/es_ES'
+import frFR from 'antd/locale/fr_FR'
+import idID from 'antd/locale/id_ID'
+import itIT from 'antd/locale/it_IT'
+import nlNL from 'antd/locale/nl_NL'
+import plPL from 'antd/locale/pl_PL'
+import ptPT from 'antd/locale/pt_PT'
+import ruRU from 'antd/locale/ru_RU'
+import thTH from 'antd/locale/th_TH'
+import viVN from 'antd/locale/vi_VN'
 import zhCN from 'antd/locale/zh_CN'
+import i18n from '../i18n'
 import { AppThemeContext, type AppThemeValue } from './app-theme-context'
 import {
   COLOR_SCHEME_STORAGE_KEY,
@@ -26,6 +39,7 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
     () => readStoredColorScheme(),
   )
   const [systemIsDark, setSystemIsDark] = useState(getSystemIsDark)
+  const [language, setLanguage] = useState(i18n.resolvedLanguage || i18n.language || 'en')
 
   const isDark = userColorScheme != null ? userColorScheme === 'dark' : systemIsDark
 
@@ -40,6 +54,32 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
     mq.addEventListener('change', onChange)
     return () => mq.removeEventListener('change', onChange)
   }, [userColorScheme])
+
+  useEffect(() => {
+    const handleLanguageChange = (lng: string) => {
+      setLanguage(lng)
+    }
+    i18n.on('languageChanged', handleLanguageChange)
+    return () => {
+      i18n.off('languageChanged', handleLanguageChange)
+    }
+  }, [])
+
+  const antdLocale = useMemo(() => {
+    if (language.startsWith('en')) return enUS
+    if (language.startsWith('id')) return idID
+    if (language.startsWith('vi')) return viVN
+    if (language.startsWith('ru')) return ruRU
+    if (language.startsWith('de')) return deDE
+    if (language.startsWith('fr')) return frFR
+    if (language.startsWith('es')) return esES
+    if (language.startsWith('it')) return itIT
+    if (language.startsWith('pt')) return ptPT
+    if (language.startsWith('pl')) return plPL
+    if (language.startsWith('nl')) return nlNL
+    if (language.startsWith('th')) return thTH
+    return zhCN
+  }, [language])
 
   const setPrimaryColor = useCallback((hex: string) => {
     const n = normalizePrimaryHex(hex)
@@ -84,7 +124,7 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
   return (
     <AppThemeContext.Provider value={value}>
       <ConfigProvider
-        locale={zhCN}
+        locale={antdLocale}
         theme={{
           algorithm: isDark ? theme.darkAlgorithm : theme.defaultAlgorithm,
           token: {

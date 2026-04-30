@@ -1,5 +1,7 @@
+import { CloseOutlined } from '@ant-design/icons'
 import { useEffect, useMemo, useState } from 'react'
-import { Col, Form, Modal, Row, message } from 'antd'
+import { Button, Card, Col, Form, Row, Space, message } from 'antd'
+import { useTranslation } from 'react-i18next'
 import type { ActionModalProps } from './types'
 import { renderProFormFieldControl } from './fieldControls'
 
@@ -28,17 +30,19 @@ export function ActionModal<T extends Record<string, unknown> = Record<string, u
   createDefaults,
   api,
   successMessage,
-  modalProps,
+  cardProps,
   formProps,
   gutter = [0, 16],
 }: ActionModalProps<T>) {
   const [form] = Form.useForm<T>()
   const [submitting, setSubmitting] = useState(false)
+  const { t } = useTranslation('common')
 
   const isEdit = initialValues !== undefined && initialValues !== null
 
   useEffect(() => {
     if (!open) {
+      form.resetFields()
       return
     }
     if (isEdit) {
@@ -67,16 +71,16 @@ export function ActionModal<T extends Record<string, unknown> = Record<string, u
     [schema],
   )
 
-  const handleOk = async () => {
+  const handleSubmit = async () => {
     try {
       const values = await form.validateFields()
       setSubmitting(true)
       try {
         await api(values as T)
-        message.success(successMessage ?? (isEdit ? '保存成功' : '新增成功'))
+        message.success(successMessage ?? (isEdit ? t('messages.saveSuccess') : t('messages.createSuccess')))
         onClose()
       } catch {
-        message.error('提交失败，请稍后重试')
+        message.error(t('messages.submitFailed'))
       } finally {
         setSubmitting(false)
       }
@@ -88,22 +92,27 @@ export function ActionModal<T extends Record<string, unknown> = Record<string, u
     }
   }
 
+  if (!open) {
+    return null
+  }
+
   return (
-    <Modal
-      {...modalProps}
-      open={open}
+    <Card
       title={title}
-      onCancel={onClose}
-      onOk={handleOk}
-      confirmLoading={submitting}
-      destroyOnHidden
-      afterClose={() => {
-        form.resetFields()
-      }}
+      extra={
+        <Button type="text" icon={<CloseOutlined />} aria-label={t('actions.close')} onClick={onClose} />
+      }
+      {...cardProps}
     >
       <Form form={form} layout="vertical" preserve={false} {...formProps}>
         <Row gutter={gutter}>{items}</Row>
       </Form>
-    </Modal>
+      <Space style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+        <Button onClick={onClose}>{t('actions.cancel')}</Button>
+        <Button type="primary" loading={submitting} onClick={() => void handleSubmit()}>
+          {t('actions.confirm')}
+        </Button>
+      </Space>
+    </Card>
   )
 }

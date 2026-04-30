@@ -84,6 +84,20 @@ class Command(BaseCommand):
                 'users.approve_registrations',
                 3,
             ),
+            (
+                '/admin/settings/vat',
+                'VAT 税率',
+                'PercentageOutlined',
+                'vat.view',
+                4,
+            ),
+            (
+                '/admin/settings/consents',
+                '同意记录',
+                'SafetyCertificateOutlined',
+                'consent.view',
+                5,
+            ),
         ]
 
         for path, title, icon, perm, sort in children:

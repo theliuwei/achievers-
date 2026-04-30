@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.core.files.storage import default_storage
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters, status, viewsets
@@ -81,11 +82,11 @@ class MeAvatarUploadView(APIView):
     def post(self, request):
         avatar = request.FILES.get('avatar')
         if avatar is None:
-            return Response({'detail': '请上传头像文件。'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': _('Please upload avatar file.')}, status=status.HTTP_400_BAD_REQUEST)
         if avatar.size > 2 * 1024 * 1024:
-            return Response({'detail': '头像文件不能超过 2MB。'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': _('Avatar size must be less than or equal to 2MB.')}, status=status.HTTP_400_BAD_REQUEST)
         if not str(getattr(avatar, 'content_type', '')).startswith('image/'):
-            return Response({'detail': '头像必须是图片文件。'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': _('Avatar must be an image file.')}, status=status.HTTP_400_BAD_REQUEST)
 
         suffix = Path(avatar.name).suffix.lower()
         if suffix not in {'.jpg', '.jpeg', '.png', '.gif', '.webp'}:
@@ -108,7 +109,7 @@ class MePasswordChangeView(APIView):
         serializer = MePasswordChangeSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response({'detail': '密码已更新，请重新登录。'}, status=status.HTTP_200_OK)
+        return Response({'detail': _('Password updated. Please sign in again.')}, status=status.HTTP_200_OK)
 
 
 @extend_schema(tags=['认证'])
@@ -131,7 +132,7 @@ class RegisterView(APIView):
         profile.save(update_fields=['pending_approval'])
         return Response(
             {
-                'detail': '注册申请已提交，管理员审核通过后即可登录。',
+                'detail': _('Registration request submitted. You can sign in after approval.'),
                 'username': user.username,
             },
             status=status.HTTP_201_CREATED,
@@ -145,6 +146,8 @@ class PermissionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Permission.objects.all()
     serializer_class = PermissionSerializer
     permission_classes = [IsAuthenticated, IsAdminUser]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['code', 'name', 'description']
     pagination_class = None
 
 
@@ -164,7 +167,7 @@ class UserViewSet(SoftDeleteModelViewSet):
     系统用户与角色：平台方走 UserProfile；企业方走 default_tenant 下 TenantMembership。
     """
 
-    queryset = UserInfo.objects.all().order_by('id')
+    queryset = UserInfo.objects.select_related('default_tenant').all().order_by('id')
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated, IsAdminUser]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
@@ -174,7 +177,7 @@ class UserViewSet(SoftDeleteModelViewSet):
 
 @extend_schema(tags=['用户 / RBAC'])
 class TenantViewSet(SoftDeleteModelViewSet):
-    queryset = Tenant.objects.all().order_by('-id')
+    queryset = Tenant.objects.select_related('primary_admin').all().order_by('-id')
     serializer_class = TenantSerializer
     permission_classes = [IsAuthenticated, IsAdminUser]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
@@ -185,7 +188,13 @@ class TenantViewSet(SoftDeleteModelViewSet):
 @extend_schema(tags=['用户 / RBAC'])
 class TenantMembershipViewSet(SoftDeleteModelViewSet):
     queryset = (
-        TenantMembership.objects.select_related('user', 'tenant', 'invited_by')
+        TenantMembership.objects.select_related(
+            'user',
+            'tenant',
+            'department',
+            'reports_to__user',
+            'invited_by',
+        )
         .prefetch_related('roles')
         .all()
         .order_by('tenant_id', 'user_id')
@@ -243,13 +252,13 @@ class TenantRegistrationApplicationViewSet(SoftDeleteModelViewSet):
     def approve(self, request, pk=None):
         application = self.get_object()
         if application.status != TenantApplicationStatus.PENDING:
-            return Response({'detail': '该入驻申请已处理，不能重复审核。'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': _('This tenant application has already been processed.')}, status=status.HTTP_400_BAD_REQUEST)
         if Tenant.objects.filter(code=application.company_code).exists():
-            return Response({'company_code': '该公司代码已被使用。'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'company_code': _('This company code is already in use.')}, status=status.HTTP_400_BAD_REQUEST)
         if UserInfo.objects.filter(username=application.admin_username).exists():
-            return Response({'admin_username': '该主管理员用户名已被使用。'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'admin_username': _('This admin username is already in use.')}, status=status.HTTP_400_BAD_REQUEST)
         if UserInfo.objects.filter(email__iexact=application.admin_email).exists():
-            return Response({'admin_email': '该主管理员邮箱已被注册。'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'admin_email': _('This admin email address is already registered.')}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
             starts_at = timezone.now()
@@ -284,7 +293,7 @@ class TenantRegistrationApplicationViewSet(SoftDeleteModelViewSet):
                 user=admin_user,
                 tenant=tenant,
                 status=MembershipStatus.ACTIVE,
-                title='主管理员',
+                title=_('Primary Admin'),
             )
             tenant_admin = Role.objects.filter(code='tenant_admin', is_active=True).first()
             if tenant_admin:
@@ -313,7 +322,7 @@ class TenantRegistrationApplicationViewSet(SoftDeleteModelViewSet):
     def reject(self, request, pk=None):
         application = self.get_object()
         if application.status != TenantApplicationStatus.PENDING:
-            return Response({'detail': '该入驻申请已处理，不能重复审核。'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': _('This tenant application has already been processed.')}, status=status.HTTP_400_BAD_REQUEST)
         serializer = TenantApplicationReviewSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         application.status = TenantApplicationStatus.REJECTED

@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from core.models import BaseModel
 
@@ -6,29 +7,29 @@ from core.models import BaseModel
 class Country(BaseModel):
     """国家/地区。"""
 
-    name_zh = models.CharField('中文名称', max_length=128)
-    name_en = models.CharField('英文名称', max_length=128)
+    name_zh = models.CharField(_('Chinese Name'), max_length=128)
+    name_en = models.CharField(_('English Name'), max_length=128)
     iso_alpha_2 = models.CharField(
-        'ISO 3166-1 alpha-2',
+        _('ISO 3166-1 alpha-2'),
         max_length=2,
         unique=True,
         db_index=True,
     )
-    iso_alpha_3 = models.CharField('ISO 3166-1 alpha-3', max_length=3, blank=True)
+    iso_alpha_3 = models.CharField(_('ISO 3166-1 alpha-3'), max_length=3, blank=True)
     phone_code = models.CharField(
-        '国际电话区号',
+        _('International Phone Code'),
         max_length=8,
         blank=True,
-        help_text='如 +86、+1',
+        help_text=_('E.g. +86, +1'),
     )
-    sort_order = models.PositiveSmallIntegerField('排序', default=0)
-    is_active = models.BooleanField('启用', default=True, db_index=True)
+    sort_order = models.PositiveSmallIntegerField(_('Sort Order'), default=0)
+    is_active = models.BooleanField(_('Active'), default=True, db_index=True)
 
     class Meta:
         db_table = 'Country'
         ordering = ['sort_order', 'iso_alpha_2', 'id']
-        verbose_name = '国家/地区'
-        verbose_name_plural = '国家/地区'
+        verbose_name = _('Country/Region')
+        verbose_name_plural = _('Countries/Regions')
 
     def __str__(self) -> str:
         return f'{self.name_zh} ({self.iso_alpha_2})'
@@ -41,24 +42,24 @@ class StateProvince(BaseModel):
         Country,
         on_delete=models.CASCADE,
         related_name='subdivisions',
-        verbose_name='国家/地区',
+        verbose_name=_('Country/Region'),
     )
-    name_zh = models.CharField('中文名称', max_length=128)
-    name_en = models.CharField('英文名称', max_length=128)
+    name_zh = models.CharField(_('Chinese Name'), max_length=128)
+    name_en = models.CharField(_('English Name'), max_length=128)
     code = models.CharField(
-        '区划/州代码',
+        _('Subdivision/State Code'),
         max_length=32,
         blank=True,
-        help_text='如省简称、美州两字母等，无则留空',
+        help_text=_('E.g. province short code or US state letters; leave empty if none.'),
     )
-    sort_order = models.PositiveSmallIntegerField('排序', default=0)
-    is_active = models.BooleanField('启用', default=True, db_index=True)
+    sort_order = models.PositiveSmallIntegerField(_('Sort Order'), default=0)
+    is_active = models.BooleanField(_('Active'), default=True, db_index=True)
 
     class Meta:
         db_table = 'StateProvince'
         ordering = ['country', 'sort_order', 'id']
-        verbose_name = '省/州'
-        verbose_name_plural = '省/州'
+        verbose_name = _('State/Province')
+        verbose_name_plural = _('States/Provinces')
 
     def __str__(self) -> str:
         return f'{self.name_zh} / {self.country.iso_alpha_2}'
@@ -71,18 +72,18 @@ class City(BaseModel):
         StateProvince,
         on_delete=models.CASCADE,
         related_name='cities',
-        verbose_name='省/州',
+        verbose_name=_('State/Province'),
     )
-    name_zh = models.CharField('中文名称', max_length=128)
-    name_en = models.CharField('英文名称', max_length=128)
-    sort_order = models.PositiveSmallIntegerField('排序', default=0)
-    is_active = models.BooleanField('启用', default=True, db_index=True)
+    name_zh = models.CharField(_('Chinese Name'), max_length=128)
+    name_en = models.CharField(_('English Name'), max_length=128)
+    sort_order = models.PositiveSmallIntegerField(_('Sort Order'), default=0)
+    is_active = models.BooleanField(_('Active'), default=True, db_index=True)
 
     class Meta:
         db_table = 'City'
         ordering = ['state', 'sort_order', 'id']
-        verbose_name = '城市'
-        verbose_name_plural = '城市'
+        verbose_name = _('City')
+        verbose_name_plural = _('Cities')
 
     def __str__(self) -> str:
         return f'{self.name_zh} / {self.state.name_zh}'

@@ -1,0 +1,773 @@
+{
+  "language": "语言",
+  "languageName": "简体中文",
+  "actions": {
+    "confirm": "确认",
+    "cancel": "取消",
+    "clear": "清空",
+    "search": "查询",
+    "reset": "重置",
+    "close": "关闭",
+    "refresh": "刷新",
+    "expand": "展开",
+    "collapse": "收起"
+  },
+  "messages": {
+    "saveSuccess": "保存成功",
+    "createSuccess": "新增成功",
+    "submitFailed": "提交失败，请稍后重试",
+    "deleteSuccess": "删除成功",
+    "deleteFailed": "删除失败，请稍后重试"
+  },
+  "adminTable": {
+    "actions": "操作",
+    "edit": "编辑",
+    "create": "新增",
+    "delete": "删除",
+    "confirmDeleteTitle": "确认删除",
+    "confirmDeleteContent": "将删除 {{count}} 条记录，是否继续？",
+    "backToList": "返回列表",
+    "selected": "已选择",
+    "items": "项"
+  },
+  "common": { "listTitle": "应用列表", "yes": "是", "no": "否", "unbound": "未绑定" },
+  "form": {
+    "placeholders": {
+      "input": "请输入",
+      "select": "请选择",
+      "uploadDemo": "选择文件（演示 Upload + getValueFromEvent）"
+    }
+  },
+  "pagination": {
+    "totalRange": "第 {{start}}-{{end}} 条 / 共 {{total}} 条"
+  },
+  "fields": {
+    "id": "ID",
+    "createdAt": "创建时间",
+    "updatedAt": "更新时间",
+    "sortOrder": "排序"
+  },
+  "status": {
+    "label": "状态",
+    "enabled": "启用",
+    "disabled": "停用"
+  },
+  "permission": {
+    "deniedTitle": "无权限访问",
+    "deniedDesc": "你没有权限查看此页面。"
+  },
+  "adminLayout": {
+    "home": "首页",
+    "profile": "个人中心",
+    "backToPortal": "返回门户首页",
+    "logout": "退出登录",
+    "notLoggedIn": "未登录",
+    "user": "用户",
+    "emptyMenu": "暂无导航数据。请在后端 Django Admin（导航菜单项）配置，并执行 seed 命令初始化。",
+    "expandSidebar": "展开侧边栏",
+    "collapseSidebar": "收起侧边栏",
+    "messages": {
+      "loadMenuFailed": "加载菜单失败"
+    }
+  },
+  "menuNav": {
+    "dashboard": "工作台",
+    "companies": "公司管理",
+    "members": "成员管理",
+    "products": "产品管理",
+    "inquiries": "询盘管理",
+    "customers": "客户管理",
+    "quotations": "报价管理",
+    "settingsGroup": "系统设置",
+    "settingsMenus": "菜单管理",
+    "settingsRoles": "角色管理",
+    "settingsUsers": "用户管理",
+    "settingsApprovals": "审批管理",
+    "settingsVat": "VAT 税率",
+    "settingsConsents": "同意记录"
+  },
+  "themeToggle": {
+    "light": "明亮",
+    "dark": "暗黑",
+    "aria": {
+      "darkToLight": "当前为暗黑模式，切换为明亮",
+      "lightToDark": "当前为明亮模式，切换为暗黑"
+    }
+  },
+  "publicLayout": {
+    "admin": "管理后台",
+    "loggedIn": "已登录",
+    "logout": "退出",
+    "tenantApply": "公司入驻",
+    "login": "登录",
+    "register": "注册"
+  },
+  "login": {
+    "title": "登录",
+    "fields": { "username": "用户名", "password": "密码" },
+    "placeholders": { "username": "用户名", "password": "密码" },
+    "validation": { "usernameRequired": "请输入用户名", "passwordRequired": "请输入密码" },
+    "actions": { "submit": "登录", "register": "注册" },
+    "messages": { "success": "登录成功", "failed": "登录失败" },
+    "noAccount": "还没有账号？"
+  },
+  "register": {
+    "title": "注册",
+    "description": "提交后账号将进入待审批状态，管理员通过后方可登录。",
+    "fields": {
+      "username": "用户名",
+      "email": "邮箱",
+      "firstNameOptional": "名（选填）",
+      "lastNameOptional": "姓（选填）",
+      "password": "密码",
+      "passwordConfirm": "确认密码"
+    },
+    "placeholders": {
+      "username": "登录用用户名",
+      "firstName": "名",
+      "lastName": "姓",
+      "password": "至少 8 位",
+      "passwordConfirm": "再次输入密码"
+    },
+    "validation": {
+      "usernameRequired": "请输入用户名",
+      "emailRequired": "请输入邮箱",
+      "emailInvalid": "邮箱格式不正确",
+      "passwordRequired": "请设置密码",
+      "passwordMin": "密码至少 8 位",
+      "passwordConfirmRequired": "请再次输入密码",
+      "passwordMismatch": "两次输入的密码不一致"
+    },
+    "actions": { "submit": "注册", "login": "登录" },
+    "messages": { "failed": "注册失败", "submitted": "注册申请已提交" },
+    "hasAccount": "已有账号？"
+  },
+  "tenantApply": {
+    "title": "公司入驻申请",
+    "description": "请填写公司资料和主管理员账号。审核通过后系统会自动创建租户、主管理员和企业管理员角色。",
+    "fields": {
+      "companyName": "公司名称",
+      "companyCode": "公司代码",
+      "companyAddress": "公司地址",
+      "contactName": "联系人",
+      "contactPhone": "联系电话",
+      "contactEmail": "联系邮箱",
+      "adminUsername": "主管理员用户名",
+      "adminEmail": "主管理员邮箱",
+      "adminFirstName": "主管理员名",
+      "adminLastName": "主管理员姓",
+      "adminPhone": "主管理员手机",
+      "adminPassword": "主管理员初始密码",
+      "passwordConfirm": "确认密码",
+      "requestedMaxMembers": "申请员工账号上限",
+      "requestedStorageQuota": "申请附件容量上限(MB)"
+    },
+    "placeholders": {
+      "companyName": "例如：深圳某某外贸有限公司",
+      "companyCode": "例如：shenzhen-trade，创建后用于租户标识",
+      "companyAddress": "请输入公司注册地址或办公地址",
+      "contactName": "联系人姓名",
+      "contactPhone": "联系电话",
+      "adminUsername": "登录用用户名",
+      "firstName": "名",
+      "lastName": "姓",
+      "password": "至少 8 位",
+      "passwordConfirm": "再次输入密码"
+    },
+    "validation": {
+      "companyNameRequired": "请输入公司名称",
+      "companyCodeRequired": "请输入公司代码",
+      "emailInvalid": "邮箱格式不正确",
+      "adminUsernameRequired": "请输入主管理员用户名",
+      "adminEmailRequired": "请输入主管理员邮箱",
+      "adminPasswordRequired": "请设置主管理员密码",
+      "passwordMin": "密码至少 8 位",
+      "passwordConfirmRequired": "请再次输入密码",
+      "passwordMismatch": "两次输入的密码不一致",
+      "maxMembersRequired": "请输入账号上限",
+      "storageRequired": "请输入容量上限"
+    },
+    "actions": { "submit": "提交入驻申请", "login": "登录" },
+    "messages": { "success": "入驻申请已提交，运营审核通过后会开通公司账号。", "failed": "提交入驻申请失败" },
+    "hasAccount": "已有账号？"
+  },
+  "home": {
+    "badge": "Achievers Automation",
+    "title": "工业自动化 · 产品与内容门户",
+    "subtitle": "面向企业与团队的统一入口：产品资料、品牌与公司内容、权限协作与开放接口，一站式支撑日常运营。",
+    "actions": { "enterAdmin": "进入管理后台", "logout": "退出登录", "login": "登录", "register": "注册账号" },
+    "coreTitle": "核心能力",
+    "coreDesc": "与后端 Achievers Automation API 对齐的能力模块，可按角色逐步开放给团队成员。",
+    "features": {
+      "products": { "title": "产品与目录", "desc": "统一管理产品型号、分类与展示资料，支撑销售与技术支持场景。" },
+      "brand": { "title": "品牌与内容", "desc": "多品牌、公司介绍与联系信息集中维护，保持对外信息一致、可追溯。" },
+      "security": { "title": "权限与安全", "desc": "基于角色的访问控制（RBAC）与 JWT 认证，接口与操作可按权限精细拆分。" },
+      "api": { "title": "开放 API", "desc": "标准 REST 接口与在线文档，便于与内部系统或合作伙伴集成。" }
+    },
+    "dev": {
+      "title": "开发者与本地环境",
+      "frontendUrl": "前端开发地址",
+      "apiPrefix": "API 前缀",
+      "apiDocs": "接口文档",
+      "currentSession": "当前会话",
+      "loggedIn": "已登录",
+      "notLoggedIn": "未登录",
+      "goLogin": "去登录"
+    }
+  },
+  "excel": {
+    "import": {
+      "onlyXlsx": "仅支持上传 .xlsx 文件",
+      "readFailed": "无法读取文件",
+      "success": "上传成功",
+      "failed": "上传失败，请稍后重试",
+      "dragText": "点击或拖拽 .xlsx 文件到此区域",
+      "dragHint": "每次仅可上传 1 个文件，格式为 Excel（.xlsx）",
+      "selectFile": "选择 .xlsx 文件",
+      "downloadTemplate": "下载模板"
+    },
+    "export": {
+      "button": "导出 Excel",
+      "success": "导出成功",
+      "failed": "导出失败，请稍后重试"
+    }
+  },
+  "apiErrors": {
+    "fallback": "请求失败，请稍后重试",
+    "fields": {
+      "code": "代码",
+      "detail": "详情",
+      "email": "邮箱",
+      "name": "名称",
+      "nonFieldErrors": "错误",
+      "password": "密码",
+      "path": "前端路由",
+      "phone": "联系电话",
+      "slug": "URL 标识",
+      "title": "标题",
+      "username": "用户名"
+    }
+  },
+  "excel": {
+    "import": {
+      "onlyXlsx": "仅支持上传 .xlsx 文件",
+      "readFailed": "无法读取文件",
+      "success": "上传成功",
+      "failed": "上传失败，请稍后重试",
+      "dragText": "点击或拖拽 .xlsx 文件到此区域",
+      "dragHint": "每次仅可上传 1 个文件，格式为 Excel（.xlsx）",
+      "selectFile": "选择 .xlsx 文件",
+      "downloadTemplate": "下载模板"
+    },
+    "export": {
+      "button": "导出 Excel",
+      "success": "导出成功",
+      "failed": "导出失败，请稍后重试"
+    }
+  },
+  "apiErrors": {
+    "fallback": "请求失败，请稍后重试",
+    "fields": {
+      "code": "代码",
+      "detail": "详情",
+      "email": "邮箱",
+      "name": "名称",
+      "nonFieldErrors": "错误",
+      "password": "密码",
+      "path": "前端路由",
+      "phone": "联系电话",
+      "slug": "URL 标识",
+      "title": "标题",
+      "username": "用户名"
+    }
+  },
+  "dashboard": {
+    "title": "工作台",
+    "description": "面向中国外贸公司的 SaaS 运营后台，集中管理公司、成员、产品、询盘、客户和报价。",
+    "quickAccess": "快捷入口",
+    "todayOps": "今日运营",
+    "responseRate": "询盘 24 小时响应率",
+    "profileCompleteness": "产品资料完整度",
+    "portalLabel": "门户首页：",
+    "backToSite": "返回官网",
+    "metrics": {
+      "tenants": "入驻公司",
+      "members": "活跃成员",
+      "inquiries": "本月询盘",
+      "quoteRate": "报价成交率"
+    },
+    "links": {
+      "companies": "公司管理",
+      "members": "成员管理",
+      "products": "产品管理",
+      "inquiries": "询盘管理",
+      "customers": "客户管理",
+      "quotations": "报价管理"
+    }
+  },
+  "settings": {
+    "title": "系统设置",
+    "description": "选择界面主色，将同步到 Ant Design 与顶部导航等自定义样式。重置后使用 VITE_THEME_PRIMARY 默认值。",
+    "themeColor": "主题色",
+    "colorPicker": "取色器",
+    "quickPresets": "快速预设",
+    "resetDefaultColor": "恢复默认主色"
+  },
+  "company": {
+    "actions": { "create": "新增公司", "edit": "编辑公司" },
+    "fields": {
+      "name": "公司名称",
+      "code": "公司代码",
+      "address": "公司地址",
+      "contactName": "联系人",
+      "contactPhone": "联系电话",
+      "contactEmail": "联系邮箱",
+      "primaryAdmin": "主管理员",
+      "subscriptionStart": "服务开始",
+      "subscriptionExpire": "订阅到期",
+      "maxMembers": "账号上限",
+      "activeMembers": "当前成员",
+      "storageQuotaMb": "容量上限(MB)",
+      "storageUsedMb": "已用容量(MB)",
+      "lockReason": "锁定原因"
+    },
+    "validation": {
+      "nameRequired": "请输入公司名称",
+      "codeRequired": "请输入公司代码",
+      "maxMembersRequired": "请输入员工账号上限",
+      "storageQuotaRequired": "请输入附件容量上限",
+      "storageUsedRequired": "请输入已用容量",
+      "statusRequired": "请选择启用状态"
+    },
+    "status": { "expired": "已到期" }
+  },
+  "member": {
+    "actions": { "create": "新增成员", "edit": "编辑成员" },
+    "fields": {
+      "tenant": "公司",
+      "user": "用户",
+      "title": "职位/备注",
+      "department": "部门",
+      "reportsTo": "直属上级",
+      "status": "成员状态",
+      "invitedBy": "邀请人",
+      "roles": "角色"
+    },
+    "validation": {
+      "tenantRequired": "请选择公司",
+      "userRequired": "请选择用户",
+      "statusRequired": "请选择成员状态"
+    },
+    "status": { "invited": "已邀请", "active": "在册", "suspended": "已暂停" },
+    "fallbackLabel": "成员 #{{id}}"
+  },
+  "product": {
+    "actions": { "create": "新增产品", "edit": "编辑产品" },
+    "fields": {
+      "sku": "型号/SKU",
+      "name": "产品名称",
+      "slug": "URL 标识",
+      "category": "类目",
+      "originCountry": "原产地",
+      "summary": "摘要",
+      "externalId": "外部 ID"
+    },
+    "validation": {
+      "nameRequired": "请输入产品名称",
+      "slugRequired": "请输入 URL 标识",
+      "categoryRequired": "请选择类目",
+      "statusRequired": "请选择状态"
+    },
+    "status": { "draft": "草稿", "active": "上架", "archived": "归档" }
+  },
+  "customer": {
+    "actions": { "create": "新增客户", "edit": "编辑客户" },
+    "fields": {
+      "tenant": "公司",
+      "name": "客户姓名",
+      "companyName": "客户公司",
+      "country": "国家",
+      "email": "邮箱",
+      "phone": "电话",
+      "whatsapp": "WhatsApp",
+      "source": "来源",
+      "level": "等级",
+      "owner": "负责人"
+    },
+    "validation": {
+      "tenantRequired": "请选择公司",
+      "nameRequired": "请输入客户姓名",
+      "levelRequired": "请选择客户等级"
+    },
+    "level": { "normal": "普通", "important": "重点" }
+  },
+  "inquiry": {
+    "actions": { "create": "新增询盘", "edit": "编辑询盘" },
+    "fields": {
+      "tenant": "公司",
+      "customer": "客户",
+      "subject": "询盘主题",
+      "productName": "产品",
+      "country": "国家",
+      "source": "来源",
+      "assignee": "负责人"
+    },
+    "validation": {
+      "tenantRequired": "请选择公司",
+      "subjectRequired": "请输入询盘主题",
+      "statusRequired": "请选择状态"
+    },
+    "status": {
+      "new": "新询盘",
+      "contacted": "已联系",
+      "quoted": "已报价",
+      "won": "已成交",
+      "invalid": "无效"
+    },
+    "defaults": { "sourceWebsite": "官网" }
+  },
+  "quotation": {
+    "actions": { "create": "新增报价", "edit": "编辑报价" },
+    "fields": {
+      "tenant": "公司",
+      "quoteNo": "报价单号",
+      "customer": "客户",
+      "inquiry": "询盘",
+      "currency": "币种",
+      "totalAmount": "总额",
+      "tradeTerm": "贸易条款",
+      "validUntil": "有效期至",
+      "owner": "负责人"
+    },
+    "validation": {
+      "tenantRequired": "请选择公司",
+      "quoteNoRequired": "请输入报价单号",
+      "statusRequired": "请选择状态"
+    },
+    "status": {
+      "draft": "草稿",
+      "sent": "已发送",
+      "confirmed": "已确认",
+      "won": "已成交",
+      "lost": "已失效"
+    }
+  },
+  "menu": {
+    "actions": { "create": "新增菜单", "edit": "编辑菜单" },
+    "fields": {
+      "title": "标题",
+      "path": "前端路由",
+      "parent": "上级菜单",
+      "icon": "图标",
+      "permissionCode": "权限码"
+    },
+    "validation": {
+      "titleRequired": "请输入菜单标题",
+      "pathPlaceholder": "如 /admin/products；分组菜单留空",
+      "parentPlaceholder": "根菜单留空",
+      "sortRequired": "请输入排序",
+      "statusRequired": "请选择启用状态"
+    }
+  },
+  "role": {
+    "actions": { "create": "新增角色", "edit": "编辑角色" },
+    "fields": {
+      "code": "角色代码",
+      "name": "角色名称",
+      "description": "说明",
+      "dataScope": "数据权限",
+      "permissions": "权限",
+      "isSystem": "系统内置"
+    },
+    "validation": {
+      "codeRequired": "请输入角色代码",
+      "nameRequired": "请输入角色名称",
+      "scopeRequired": "请选择数据权限",
+      "statusRequired": "请选择启用状态",
+      "systemRequired": "请选择是否系统内置"
+    },
+    "scope": {
+      "own": "本人数据",
+      "department": "部门/下属数据",
+      "tenant": "公司全部数据",
+      "all": "平台全部数据"
+    }
+  },
+  "user": {
+    "actions": { "create": "新增用户", "edit": "编辑用户" },
+    "fields": {
+      "username": "用户名",
+      "email": "邮箱",
+      "password": "密码",
+      "firstName": "名",
+      "lastName": "姓",
+      "userKind": "身份类型",
+      "isStaff": "后台登录",
+      "defaultTenant": "默认公司",
+      "roles": "角色"
+    },
+    "validation": {
+      "usernameRequired": "请输入用户名",
+      "emailRequired": "请输入邮箱",
+      "passwordPlaceholder": "编辑时留空表示不修改密码",
+      "userKindRequired": "请选择身份类型",
+      "statusRequired": "请选择启用状态",
+      "isStaffRequired": "请选择后台登录权限"
+    },
+    "kind": {
+      "platform": "平台运营方",
+      "tenant": "企业用户",
+      "platformShort": "平台",
+      "tenantShort": "企业"
+    }
+  },
+  "approval": {
+    "tenantApplication": "公司入驻审批",
+    "userRegistration": "用户注册审批",
+    "actions": { "approve": "通过", "reject": "拒绝" },
+    "status": { "pending": "待审核", "approved": "已通过", "rejected": "已拒绝" },
+    "fields": {
+      "appliedAt": "申请时间",
+      "reviewedAt": "审核时间",
+      "rejectReason": "拒绝原因",
+      "adminUsername": "管理员账号",
+      "adminEmail": "管理员邮箱",
+      "storageMb": "容量(MB)"
+    },
+    "messages": {
+      "userApproved": "已通过用户注册申请",
+      "userRejected": "已拒绝用户注册申请",
+      "tenantApproved": "已通过公司入驻申请",
+      "tenantRejected": "已拒绝公司入驻申请",
+      "reviewRejectReason": "运营审核拒绝"
+    }
+  },
+  "business": {
+    "listSuffix": "列表",
+    "monthlyGoalProgress": "本月目标完成度",
+    "operationTips": "运营提示",
+    "nextStep": "下一步",
+    "defaultNextStep": "先完成基础数据，再接入真实业务 API。",
+    "quickActions": "快捷操作",
+    "totalCount": "共 {{count}} 条"
+  },
+  "vat": {
+    "listTitle": "VAT 税率",
+    "actions": { "create": "新增税率", "edit": "编辑税率" },
+    "fields": {
+      "countryCode": "国家代码",
+      "name": "税率名称",
+      "rate": "税率(%)",
+      "priceMode": "价格模式",
+      "effectiveFrom": "生效开始",
+      "effectiveTo": "生效结束"
+    },
+    "priceMode": { "inclusive": "含税", "exclusive": "不含税" },
+    "validation": {
+      "countryRequired": "请输入国家代码",
+      "nameRequired": "请输入税率名称",
+      "rateRequired": "请输入税率",
+      "effectiveFromRequired": "请选择生效开始日期",
+      "statusRequired": "请选择状态"
+    }
+  },
+  "consent": {
+    "listTitle": "同意记录",
+    "fields": {
+      "tenant": "公司",
+      "user": "用户",
+      "type": "同意类型",
+      "action": "操作",
+      "policyVersion": "政策版本",
+      "ipAddress": "IP 地址",
+      "userAgent": "User Agent"
+    },
+    "types": {
+      "cookie": "Cookie",
+      "privacyPolicy": "隐私政策",
+      "marketing": "营销同意",
+      "terms": "条款协议"
+    },
+    "actions": {
+      "accepted": "已同意",
+      "revoked": "已撤回",
+      "updated": "已更新"
+    }
+  },
+  "translation": {
+    "productListTitle": "产品翻译",
+    "categoryListTitle": "类目翻译",
+    "actions": {
+      "createProduct": "新增产品翻译",
+      "editProduct": "编辑产品翻译",
+      "createCategory": "新增类目翻译",
+      "editCategory": "编辑类目翻译"
+    },
+    "fields": {
+      "product": "产品",
+      "category": "类目",
+      "language": "语言",
+      "name": "翻译名称",
+      "summary": "翻译摘要",
+      "description": "翻译描述",
+      "seoTitle": "SEO 标题",
+      "seoDescription": "SEO 描述"
+    },
+    "validation": {
+      "productRequired": "请选择产品",
+      "categoryRequired": "请选择类目",
+      "languageRequired": "请选择语言",
+      "nameRequired": "请输入翻译名称"
+    }
+  },
+  "profile": {
+    "countryDefault": "中国",
+    "avatarHelp": "支持 JPG、PNG、GIF、WebP，文件大小不超过 2MB。",
+    "menu": {
+      "basic": "基本设置",
+      "security": "安全设置",
+      "binding": "账号绑定",
+      "notifications": "新消息通知"
+    },
+    "fields": {
+      "bio": "个人简介",
+      "gender": "性别",
+      "countryRegion": "国家/地区",
+      "provinceCity": "所在省市",
+      "address": "街道地址",
+      "phone": "联系电话",
+      "avatarUrl": "头像地址",
+      "avatar": "头像"
+    },
+    "placeholder": {
+      "email": "请输入邮箱",
+      "lastName": "请输入姓",
+      "firstName": "请输入名",
+      "bio": "个人简介",
+      "province": "请选择省",
+      "city": "请选择市",
+      "address": "请输入街道地址",
+      "phone": "请输入联系电话"
+    },
+    "gender": {
+      "unset": "未设置",
+      "male": "男",
+      "female": "女",
+      "other": "其他"
+    },
+    "actions": {
+      "updateBasic": "更新基本信息",
+      "changeAvatar": "更换头像",
+      "setup": "设置",
+      "bind": "绑定",
+      "unbind": "解绑",
+      "edit": "修改"
+    },
+    "messages": {
+      "profileUpdated": "个人信息已更新",
+      "selectImage": "请选择图片文件",
+      "avatarTooLarge": "头像文件不能超过 2MB",
+      "avatarUpdated": "头像已更新",
+      "avatarUploadFailed": "头像上传失败",
+      "passwordUpdated": "密码已更新，请重新登录",
+      "passwordUpdateFailed": "密码修改失败",
+      "bindingOn": "{{provider}}账号已绑定",
+      "bindingOff": "{{provider}}账号已解绑",
+      "notificationOn": "已开启消息通知",
+      "notificationOff": "已关闭消息通知"
+    },
+    "validation": {
+      "emailInvalid": "请输入正确的邮箱地址",
+      "currentPasswordRequired": "请输入当前密码",
+      "newPasswordRequired": "请输入新密码",
+      "passwordMinLength": "密码至少 8 位",
+      "confirmPasswordRequired": "请再次输入新密码",
+      "passwordNotMatch": "两次输入的新密码不一致"
+    },
+    "security": {
+      "password": "账户密码",
+      "passwordStrength": "当前密码强度：强",
+      "securePhone": "密保手机",
+      "boundPhone": "已绑定手机：{{value}}",
+      "unboundPhone": "未绑定手机",
+      "secureQuestion": "密保问题",
+      "secureQuestionDesc": "未设置密保问题，密保问题可有效保护账户安全",
+      "backupEmail": "备用邮箱",
+      "boundEmail": "已绑定邮箱：{{value}}",
+      "unboundEmail": "未绑定邮箱",
+      "mfaDevice": "MFA 设备",
+      "mfaDesc": "未绑定 MFA 设备，绑定后可进行二次确认",
+      "protected": "已保护",
+      "changePassword": "修改账户密码",
+      "currentPassword": "当前密码",
+      "newPassword": "新密码",
+      "confirmPassword": "确认新密码"
+    },
+    "binding": {
+      "taobao": "淘宝",
+      "alipay": "支付宝",
+      "dingtalk": "钉钉",
+      "bindTaobao": "绑定淘宝",
+      "boundTaobao": "当前已绑定淘宝账号",
+      "unboundTaobao": "当前未绑定淘宝账号",
+      "bindAlipay": "绑定支付宝",
+      "boundAlipay": "当前已绑定支付宝账号",
+      "unboundAlipay": "当前未绑定支付宝账号",
+      "bindDingtalk": "绑定钉钉",
+      "boundDingtalk": "当前已绑定钉钉账号",
+      "unboundDingtalk": "当前未绑定钉钉账号"
+    },
+    "notifications": {
+      "userMessages": "用户消息",
+      "userMessagesDesc": "其他用户的消息将以站内信的形式通知",
+      "systemMessages": "系统消息",
+      "systemMessagesDesc": "系统消息将以站内信的形式通知",
+      "todoTasks": "待办任务",
+      "todoTasksDesc": "待办任务将以站内信的形式通知"
+    },
+    "switch": {
+      "on": "开",
+      "off": "关"
+    }
+  },
+  "userManage": {
+    "roles": { "admin": "管理员", "editor": "编辑", "viewer": "只读" },
+    "search": {
+      "keyword": "关键词",
+      "keywordPlaceholder": "用户名 / 昵称 / 邮箱",
+      "onlyActive": "仅看启用",
+      "attachment": "附件（演示 Upload）"
+    },
+    "form": {
+      "usernamePlaceholder": "登录名，唯一",
+      "nickname": "昵称",
+      "nicknameRequired": "请输入昵称",
+      "roleRequired": "请选择角色",
+      "active": "启用账号"
+    },
+    "errors": {
+      "usernameExists": "用户名已存在",
+      "missingId": "缺少 id",
+      "userNotFound": "用户不存在"
+    },
+    "import": {
+      "userA": "导入用户 A",
+      "userB": "导入用户 B"
+    }
+  },
+  "languages": {
+    "en": "English",
+    "zh": "简体中文",
+    "id": "Bahasa Indonesia",
+    "vi": "Tiếng Việt",
+    "ru": "Русский",
+    "de": "Deutsch",
+    "fr": "Français",
+    "es": "Español",
+    "it": "Italiano",
+    "pt": "Português",
+    "pl": "Polski",
+    "nl": "Nederlands",
+    "th": "ไทย"
+  }
+}

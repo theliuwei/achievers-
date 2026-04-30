@@ -1,0 +1,740 @@
+{
+  "language": "Language",
+  "languageName": "English",
+  "actions": {
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "clear": "Clear",
+    "search": "Search",
+    "reset": "Reset",
+    "close": "Close",
+    "refresh": "Refresh",
+    "expand": "Expand",
+    "collapse": "Collapse"
+  },
+  "messages": {
+    "saveSuccess": "Saved successfully",
+    "createSuccess": "Created successfully",
+    "submitFailed": "Submission failed, please try again later",
+    "deleteSuccess": "Deleted successfully",
+    "deleteFailed": "Delete failed, please try again later"
+  },
+  "adminTable": {
+    "actions": "Actions",
+    "edit": "Edit",
+    "create": "Create",
+    "delete": "Delete",
+    "confirmDeleteTitle": "Confirm deletion",
+    "confirmDeleteContent": "Delete {{count}} records. Continue?",
+    "backToList": "Back to list",
+    "selected": "Selected",
+    "items": "items"
+  },
+  "common": { "listTitle": "List", "yes": "Yes", "no": "No", "unbound": "Unbound" },
+  "form": {
+    "placeholders": {
+      "input": "Please input",
+      "select": "Please select",
+      "uploadDemo": "Select file (demo Upload + getValueFromEvent)"
+    }
+  },
+  "pagination": {
+    "totalRange": "{{start}}-{{end}} of {{total}} items"
+  },
+  "fields": {
+    "id": "ID",
+    "createdAt": "Created At",
+    "updatedAt": "Updated At",
+    "sortOrder": "Sort Order"
+  },
+  "status": {
+    "label": "Status",
+    "enabled": "Enabled",
+    "disabled": "Disabled"
+  },
+  "permission": {
+    "deniedTitle": "No Access",
+    "deniedDesc": "You do not have permission to view this page."
+  },
+  "adminLayout": {
+    "home": "Home",
+    "profile": "Profile",
+    "backToPortal": "Back to Portal",
+    "logout": "Logout",
+    "notLoggedIn": "Not Logged In",
+    "user": "User",
+    "emptyMenu": "No menu data. Configure NavMenuItem in Django Admin and run seed command.",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar",
+    "messages": {
+      "loadMenuFailed": "Failed to load menu"
+    }
+  },
+  "menuNav": {
+    "dashboard": "Dashboard",
+    "companies": "Company Management",
+    "members": "Member Management",
+    "products": "Product Management",
+    "inquiries": "Inquiry Management",
+    "customers": "Customer Management",
+    "quotations": "Quotation Management",
+    "settingsGroup": "System Settings",
+    "settingsMenus": "Menu Management",
+    "settingsRoles": "Role Management",
+    "settingsUsers": "User Management",
+    "settingsApprovals": "Approval Management",
+    "settingsVat": "VAT Rates",
+    "settingsConsents": "Consent Logs"
+  },
+  "themeToggle": {
+    "light": "Light",
+    "dark": "Dark",
+    "aria": {
+      "darkToLight": "Currently dark mode, switch to light mode",
+      "lightToDark": "Currently light mode, switch to dark mode"
+    }
+  },
+  "publicLayout": {
+    "admin": "Admin Console",
+    "loggedIn": "Signed in",
+    "logout": "Logout",
+    "tenantApply": "Tenant Apply",
+    "login": "Login",
+    "register": "Register"
+  },
+  "login": {
+    "title": "Login",
+    "fields": { "username": "Username", "password": "Password" },
+    "placeholders": { "username": "Username", "password": "Password" },
+    "validation": { "usernameRequired": "Please input username", "passwordRequired": "Please input password" },
+    "actions": { "submit": "Login", "register": "Register" },
+    "messages": { "success": "Login successful", "failed": "Login failed" },
+    "noAccount": "No account yet?"
+  },
+  "register": {
+    "title": "Register",
+    "description": "Your account will be pending approval after submission. You can login after admin approval.",
+    "fields": {
+      "username": "Username",
+      "email": "Email",
+      "firstNameOptional": "First Name (Optional)",
+      "lastNameOptional": "Last Name (Optional)",
+      "password": "Password",
+      "passwordConfirm": "Confirm Password"
+    },
+    "placeholders": {
+      "username": "Username for login",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "password": "At least 8 characters",
+      "passwordConfirm": "Input password again"
+    },
+    "validation": {
+      "usernameRequired": "Please input username",
+      "emailRequired": "Please input email",
+      "emailInvalid": "Invalid email format",
+      "passwordRequired": "Please set password",
+      "passwordMin": "Password must be at least 8 characters",
+      "passwordConfirmRequired": "Please input password confirmation",
+      "passwordMismatch": "Passwords do not match"
+    },
+    "actions": { "submit": "Register", "login": "Login" },
+    "messages": { "failed": "Register failed", "submitted": "Registration request submitted" },
+    "hasAccount": "Already have an account?"
+  },
+  "tenantApply": {
+    "title": "Tenant Application",
+    "description": "Please fill company profile and primary admin account. After approval, tenant and admin role will be created automatically.",
+    "fields": {
+      "companyName": "Company Name",
+      "companyCode": "Company Code",
+      "companyAddress": "Company Address",
+      "contactName": "Contact Name",
+      "contactPhone": "Contact Phone",
+      "contactEmail": "Contact Email",
+      "adminUsername": "Primary Admin Username",
+      "adminEmail": "Primary Admin Email",
+      "adminFirstName": "Primary Admin First Name",
+      "adminLastName": "Primary Admin Last Name",
+      "adminPhone": "Primary Admin Phone",
+      "adminPassword": "Primary Admin Initial Password",
+      "passwordConfirm": "Confirm Password",
+      "requestedMaxMembers": "Requested Max Members",
+      "requestedStorageQuota": "Requested Storage Quota (MB)"
+    },
+    "placeholders": {
+      "companyName": "e.g. Shenzhen Trade Co., Ltd.",
+      "companyCode": "e.g. shenzhen-trade",
+      "companyAddress": "Input company registered/office address",
+      "contactName": "Contact person name",
+      "contactPhone": "Contact phone",
+      "adminUsername": "Username for login",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "password": "At least 8 characters",
+      "passwordConfirm": "Input password again"
+    },
+    "validation": {
+      "companyNameRequired": "Please input company name",
+      "companyCodeRequired": "Please input company code",
+      "emailInvalid": "Invalid email format",
+      "adminUsernameRequired": "Please input primary admin username",
+      "adminEmailRequired": "Please input primary admin email",
+      "adminPasswordRequired": "Please set primary admin password",
+      "passwordMin": "Password must be at least 8 characters",
+      "passwordConfirmRequired": "Please input password confirmation",
+      "passwordMismatch": "Passwords do not match",
+      "maxMembersRequired": "Please input max members",
+      "storageRequired": "Please input storage quota"
+    },
+    "actions": { "submit": "Submit Application", "login": "Login" },
+    "messages": { "success": "Application submitted. Company account will be enabled after approval.", "failed": "Failed to submit tenant application" },
+    "hasAccount": "Already have an account?"
+  },
+  "home": {
+    "badge": "Achievers Automation",
+    "title": "Industrial Automation Product & Content Portal",
+    "subtitle": "A unified entry for product content, brand info, team collaboration, and open APIs.",
+    "actions": { "enterAdmin": "Enter Admin", "logout": "Logout", "login": "Login", "register": "Register" },
+    "coreTitle": "Core Capabilities",
+    "coreDesc": "Capability modules aligned with backend API, can be gradually opened by role.",
+    "features": {
+      "products": { "title": "Products & Catalog", "desc": "Manage product models, categories and display content in one place." },
+      "brand": { "title": "Brand & Content", "desc": "Centralize brand, about and contact content with consistency." },
+      "security": { "title": "Permission & Security", "desc": "RBAC + JWT with fine-grained permission control." },
+      "api": { "title": "Open API", "desc": "Standard REST APIs and online docs for integrations." }
+    },
+    "dev": {
+      "title": "Developer & Local Environment",
+      "frontendUrl": "Frontend Dev URL",
+      "apiPrefix": "API Prefix",
+      "apiDocs": "API Docs",
+      "currentSession": "Current Session",
+      "loggedIn": "Signed in",
+      "notLoggedIn": "Not signed in",
+      "goLogin": "Go Login"
+    }
+  },
+  "excel": {
+    "import": {
+      "onlyXlsx": "Only .xlsx files are supported",
+      "readFailed": "Cannot read file",
+      "success": "Upload successful",
+      "failed": "Upload failed, please try again later",
+      "dragText": "Click or drag .xlsx file to this area",
+      "dragHint": "Only 1 file per upload, Excel format (.xlsx)",
+      "selectFile": "Select .xlsx file",
+      "downloadTemplate": "Download template"
+    },
+    "export": {
+      "button": "Export Excel",
+      "success": "Export successful",
+      "failed": "Export failed, please try again later"
+    }
+  },
+  "apiErrors": {
+    "fallback": "Request failed, please try again later",
+    "fields": {
+      "code": "Code",
+      "detail": "Detail",
+      "email": "Email",
+      "name": "Name",
+      "nonFieldErrors": "Error",
+      "password": "Password",
+      "path": "Frontend Route",
+      "phone": "Phone",
+      "slug": "URL Slug",
+      "title": "Title",
+      "username": "Username"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "description": "SaaS admin panel for trade teams to manage tenants, members, products, inquiries, customers, and quotations.",
+    "quickAccess": "Quick Access",
+    "todayOps": "Today Operations",
+    "responseRate": "24h Inquiry Response Rate",
+    "profileCompleteness": "Product Profile Completeness",
+    "portalLabel": "Portal: ",
+    "backToSite": "Back to Site",
+    "metrics": {
+      "tenants": "Tenants",
+      "members": "Active Members",
+      "inquiries": "Monthly Inquiries",
+      "quoteRate": "Quote Win Rate"
+    },
+    "links": {
+      "companies": "Company Management",
+      "members": "Member Management",
+      "products": "Product Management",
+      "inquiries": "Inquiry Management",
+      "customers": "Customer Management",
+      "quotations": "Quotation Management"
+    }
+  },
+  "settings": {
+    "title": "System Settings",
+    "description": "Choose the primary UI color. It syncs to Ant Design and custom top bar styles. Reset will use VITE_THEME_PRIMARY.",
+    "themeColor": "Theme Color",
+    "colorPicker": "Color Picker",
+    "quickPresets": "Quick Presets",
+    "resetDefaultColor": "Reset Default Color"
+  },
+  "company": {
+    "actions": { "create": "Create Company", "edit": "Edit Company" },
+    "fields": {
+      "name": "Company Name",
+      "code": "Company Code",
+      "address": "Address",
+      "contactName": "Contact Name",
+      "contactPhone": "Contact Phone",
+      "contactEmail": "Contact Email",
+      "primaryAdmin": "Primary Admin",
+      "subscriptionStart": "Subscription Start",
+      "subscriptionExpire": "Subscription Expires",
+      "maxMembers": "Member Limit",
+      "activeMembers": "Active Members",
+      "storageQuotaMb": "Storage Quota (MB)",
+      "storageUsedMb": "Storage Used (MB)",
+      "lockReason": "Lock Reason"
+    },
+    "validation": {
+      "nameRequired": "Please input company name",
+      "codeRequired": "Please input company code",
+      "maxMembersRequired": "Please input member limit",
+      "storageQuotaRequired": "Please input storage quota",
+      "storageUsedRequired": "Please input storage used",
+      "statusRequired": "Please select status"
+    },
+    "status": { "expired": "Expired" }
+  },
+  "member": {
+    "actions": { "create": "Create Member", "edit": "Edit Member" },
+    "fields": {
+      "tenant": "Company",
+      "user": "User",
+      "title": "Title/Note",
+      "department": "Department",
+      "reportsTo": "Direct Manager",
+      "status": "Member Status",
+      "invitedBy": "Invited By",
+      "roles": "Roles"
+    },
+    "validation": {
+      "tenantRequired": "Please select company",
+      "userRequired": "Please select user",
+      "statusRequired": "Please select member status"
+    },
+    "status": { "invited": "Invited", "active": "Active", "suspended": "Suspended" },
+    "fallbackLabel": "Member #{{id}}"
+  },
+  "product": {
+    "actions": { "create": "Create Product", "edit": "Edit Product" },
+    "fields": {
+      "sku": "SKU/Model",
+      "name": "Product Name",
+      "slug": "URL Slug",
+      "category": "Category",
+      "originCountry": "Origin Country",
+      "summary": "Summary",
+      "externalId": "External ID"
+    },
+    "validation": {
+      "nameRequired": "Please input product name",
+      "slugRequired": "Please input URL slug",
+      "categoryRequired": "Please select category",
+      "statusRequired": "Please select status"
+    },
+    "status": { "draft": "Draft", "active": "Active", "archived": "Archived" }
+  },
+  "customer": {
+    "actions": { "create": "Create Customer", "edit": "Edit Customer" },
+    "fields": {
+      "tenant": "Company",
+      "name": "Customer Name",
+      "companyName": "Customer Company",
+      "country": "Country",
+      "email": "Email",
+      "phone": "Phone",
+      "whatsapp": "WhatsApp",
+      "source": "Source",
+      "level": "Level",
+      "owner": "Owner"
+    },
+    "validation": {
+      "tenantRequired": "Please select company",
+      "nameRequired": "Please input customer name",
+      "levelRequired": "Please select customer level"
+    },
+    "level": { "normal": "Normal", "important": "Important" }
+  },
+  "inquiry": {
+    "actions": { "create": "Create Inquiry", "edit": "Edit Inquiry" },
+    "fields": {
+      "tenant": "Company",
+      "customer": "Customer",
+      "subject": "Subject",
+      "productName": "Product",
+      "country": "Country",
+      "source": "Source",
+      "assignee": "Assignee"
+    },
+    "validation": {
+      "tenantRequired": "Please select company",
+      "subjectRequired": "Please input inquiry subject",
+      "statusRequired": "Please select status"
+    },
+    "status": {
+      "new": "New",
+      "contacted": "Contacted",
+      "quoted": "Quoted",
+      "won": "Won",
+      "invalid": "Invalid"
+    },
+    "defaults": { "sourceWebsite": "Website" }
+  },
+  "quotation": {
+    "actions": { "create": "Create Quotation", "edit": "Edit Quotation" },
+    "fields": {
+      "tenant": "Company",
+      "quoteNo": "Quote No.",
+      "customer": "Customer",
+      "inquiry": "Inquiry",
+      "currency": "Currency",
+      "totalAmount": "Total Amount",
+      "tradeTerm": "Trade Term",
+      "validUntil": "Valid Until",
+      "owner": "Owner"
+    },
+    "validation": {
+      "tenantRequired": "Please select company",
+      "quoteNoRequired": "Please input quote number",
+      "statusRequired": "Please select status"
+    },
+    "status": {
+      "draft": "Draft",
+      "sent": "Sent",
+      "confirmed": "Confirmed",
+      "won": "Won",
+      "lost": "Lost"
+    }
+  },
+  "menu": {
+    "actions": { "create": "Create Menu", "edit": "Edit Menu" },
+    "fields": {
+      "title": "Title",
+      "path": "Route Path",
+      "parent": "Parent Menu",
+      "icon": "Icon",
+      "permissionCode": "Permission Code"
+    },
+    "validation": {
+      "titleRequired": "Please input menu title",
+      "pathPlaceholder": "e.g. /admin/products; leave blank for groups",
+      "parentPlaceholder": "Leave blank for root menu",
+      "sortRequired": "Please input sort order",
+      "statusRequired": "Please select status"
+    }
+  },
+  "role": {
+    "actions": { "create": "Create Role", "edit": "Edit Role" },
+    "fields": {
+      "code": "Role Code",
+      "name": "Role Name",
+      "description": "Description",
+      "dataScope": "Data Scope",
+      "permissions": "Permissions",
+      "isSystem": "Built-in"
+    },
+    "validation": {
+      "codeRequired": "Please input role code",
+      "nameRequired": "Please input role name",
+      "scopeRequired": "Please select data scope",
+      "statusRequired": "Please select status",
+      "systemRequired": "Please select built-in option"
+    },
+    "scope": {
+      "own": "Own Data",
+      "department": "Department/Subordinates",
+      "tenant": "Tenant All Data",
+      "all": "Platform All Data"
+    }
+  },
+  "user": {
+    "actions": { "create": "Create User", "edit": "Edit User" },
+    "fields": {
+      "username": "Username",
+      "email": "Email",
+      "password": "Password",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "userKind": "User Type",
+      "isStaff": "Admin Login",
+      "defaultTenant": "Default Tenant",
+      "roles": "Roles"
+    },
+    "validation": {
+      "usernameRequired": "Please input username",
+      "emailRequired": "Please input email",
+      "passwordPlaceholder": "Leave blank on edit to keep current password",
+      "userKindRequired": "Please select user type",
+      "statusRequired": "Please select status",
+      "isStaffRequired": "Please select admin login permission"
+    },
+    "kind": {
+      "platform": "Platform Operator",
+      "tenant": "Tenant User",
+      "platformShort": "Platform",
+      "tenantShort": "Tenant"
+    }
+  },
+  "approval": {
+    "tenantApplication": "Tenant Applications",
+    "userRegistration": "User Registrations",
+    "actions": { "approve": "Approve", "reject": "Reject" },
+    "status": { "pending": "Pending", "approved": "Approved", "rejected": "Rejected" },
+    "fields": {
+      "appliedAt": "Applied At",
+      "reviewedAt": "Reviewed At",
+      "rejectReason": "Reject Reason",
+      "adminUsername": "Admin Username",
+      "adminEmail": "Admin Email",
+      "storageMb": "Storage (MB)"
+    },
+    "messages": {
+      "userApproved": "User registration approved",
+      "userRejected": "User registration rejected",
+      "tenantApproved": "Tenant application approved",
+      "tenantRejected": "Tenant application rejected",
+      "reviewRejectReason": "Rejected by operations review"
+    }
+  },
+  "business": {
+    "listSuffix": " List",
+    "monthlyGoalProgress": "Monthly Goal Progress",
+    "operationTips": "Operation Tips",
+    "nextStep": "Next Step",
+    "defaultNextStep": "Complete base data first, then integrate real business APIs.",
+    "quickActions": "Quick Actions",
+    "totalCount": "Total {{count}} items"
+  },
+  "vat": {
+    "listTitle": "VAT Rates",
+    "actions": { "create": "Create VAT Rate", "edit": "Edit VAT Rate" },
+    "fields": {
+      "countryCode": "Country Code",
+      "name": "Name",
+      "rate": "Rate (%)",
+      "priceMode": "Price Mode",
+      "effectiveFrom": "Effective From",
+      "effectiveTo": "Effective To"
+    },
+    "priceMode": { "inclusive": "Tax Included", "exclusive": "Tax Excluded" },
+    "validation": {
+      "countryRequired": "Please input country code",
+      "nameRequired": "Please input VAT name",
+      "rateRequired": "Please input VAT rate",
+      "effectiveFromRequired": "Please select effective date",
+      "statusRequired": "Please select status"
+    }
+  },
+  "consent": {
+    "listTitle": "Consent Logs",
+    "fields": {
+      "tenant": "Tenant",
+      "user": "User",
+      "type": "Consent Type",
+      "action": "Action",
+      "policyVersion": "Policy Version",
+      "ipAddress": "IP Address",
+      "userAgent": "User Agent"
+    },
+    "types": {
+      "cookie": "Cookie",
+      "privacyPolicy": "Privacy Policy",
+      "marketing": "Marketing",
+      "terms": "Terms"
+    },
+    "actions": {
+      "accepted": "Accepted",
+      "revoked": "Revoked",
+      "updated": "Updated"
+    }
+  },
+  "translation": {
+    "productListTitle": "Product Translations",
+    "categoryListTitle": "Category Translations",
+    "actions": {
+      "createProduct": "Create Product Translation",
+      "editProduct": "Edit Product Translation",
+      "createCategory": "Create Category Translation",
+      "editCategory": "Edit Category Translation"
+    },
+    "fields": {
+      "product": "Product",
+      "category": "Category",
+      "language": "Language",
+      "name": "Translated Name",
+      "summary": "Translated Summary",
+      "description": "Translated Description",
+      "seoTitle": "SEO Title",
+      "seoDescription": "SEO Description"
+    },
+    "validation": {
+      "productRequired": "Please select product",
+      "categoryRequired": "Please select category",
+      "languageRequired": "Please select language",
+      "nameRequired": "Please input translated name"
+    }
+  },
+  "profile": {
+    "countryDefault": "China",
+    "avatarHelp": "Supports JPG, PNG, GIF, WebP. Max file size is 2MB.",
+    "menu": {
+      "basic": "Basic Settings",
+      "security": "Security Settings",
+      "binding": "Account Binding",
+      "notifications": "Notifications"
+    },
+    "fields": {
+      "bio": "Bio",
+      "gender": "Gender",
+      "countryRegion": "Country/Region",
+      "provinceCity": "Province/City",
+      "address": "Street Address",
+      "phone": "Phone",
+      "avatarUrl": "Avatar URL",
+      "avatar": "Avatar"
+    },
+    "placeholder": {
+      "email": "Please input email",
+      "lastName": "Please input last name",
+      "firstName": "Please input first name",
+      "bio": "Bio",
+      "province": "Please select province",
+      "city": "Please select city",
+      "address": "Please input address",
+      "phone": "Please input phone"
+    },
+    "gender": {
+      "unset": "Unset",
+      "male": "Male",
+      "female": "Female",
+      "other": "Other"
+    },
+    "actions": {
+      "updateBasic": "Update Basic Info",
+      "changeAvatar": "Change Avatar",
+      "setup": "Setup",
+      "bind": "Bind",
+      "unbind": "Unbind",
+      "edit": "Edit"
+    },
+    "messages": {
+      "profileUpdated": "Profile updated",
+      "selectImage": "Please select an image file",
+      "avatarTooLarge": "Avatar size must be <= 2MB",
+      "avatarUpdated": "Avatar updated",
+      "avatarUploadFailed": "Avatar upload failed",
+      "passwordUpdated": "Password updated, please login again",
+      "passwordUpdateFailed": "Password update failed",
+      "bindingOn": "{{provider}} account bound",
+      "bindingOff": "{{provider}} account unbound",
+      "notificationOn": "Notifications enabled",
+      "notificationOff": "Notifications disabled"
+    },
+    "validation": {
+      "emailInvalid": "Please input a valid email",
+      "currentPasswordRequired": "Please input current password",
+      "newPasswordRequired": "Please input new password",
+      "passwordMinLength": "Password must be at least 8 characters",
+      "confirmPasswordRequired": "Please confirm new password",
+      "passwordNotMatch": "Passwords do not match"
+    },
+    "security": {
+      "password": "Account Password",
+      "passwordStrength": "Current strength: Strong",
+      "securePhone": "Secure Phone",
+      "boundPhone": "Bound phone: {{value}}",
+      "unboundPhone": "No bound phone",
+      "secureQuestion": "Security Question",
+      "secureQuestionDesc": "Not set. Security questions help protect your account.",
+      "backupEmail": "Backup Email",
+      "boundEmail": "Bound email: {{value}}",
+      "unboundEmail": "No bound email",
+      "mfaDevice": "MFA Device",
+      "mfaDesc": "No MFA device bound. Bind one for secondary verification.",
+      "protected": "Protected",
+      "changePassword": "Change Password",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password"
+    },
+    "binding": {
+      "taobao": "Taobao",
+      "alipay": "Alipay",
+      "dingtalk": "DingTalk",
+      "bindTaobao": "Bind Taobao",
+      "boundTaobao": "Taobao account is bound",
+      "unboundTaobao": "Taobao account is not bound",
+      "bindAlipay": "Bind Alipay",
+      "boundAlipay": "Alipay account is bound",
+      "unboundAlipay": "Alipay account is not bound",
+      "bindDingtalk": "Bind DingTalk",
+      "boundDingtalk": "DingTalk account is bound",
+      "unboundDingtalk": "DingTalk account is not bound"
+    },
+    "notifications": {
+      "userMessages": "User Messages",
+      "userMessagesDesc": "Messages from other users will be sent as in-app notifications.",
+      "systemMessages": "System Messages",
+      "systemMessagesDesc": "System messages will be sent as in-app notifications.",
+      "todoTasks": "Todo Tasks",
+      "todoTasksDesc": "Todo tasks will be sent as in-app notifications."
+    },
+    "switch": {
+      "on": "On",
+      "off": "Off"
+    }
+  },
+  "userManage": {
+    "roles": { "admin": "Admin", "editor": "Editor", "viewer": "Viewer" },
+    "search": {
+      "keyword": "Keyword",
+      "keywordPlaceholder": "Username / Nickname / Email",
+      "onlyActive": "Only Active",
+      "attachment": "Attachment (Upload Demo)"
+    },
+    "form": {
+      "usernamePlaceholder": "Unique login name",
+      "nickname": "Nickname",
+      "nicknameRequired": "Please input nickname",
+      "roleRequired": "Please select role",
+      "active": "Enable Account"
+    },
+    "errors": {
+      "usernameExists": "Username already exists",
+      "missingId": "Missing id",
+      "userNotFound": "User not found"
+    },
+    "import": {
+      "userA": "Imported User A",
+      "userB": "Imported User B"
+    }
+  },
+  "languages": {
+    "en": "English",
+    "zh": "简体中文",
+    "id": "Bahasa Indonesia",
+    "vi": "Tiếng Việt",
+    "ru": "Русский",
+    "de": "Deutsch",
+    "fr": "Français",
+    "es": "Español",
+    "it": "Italiano",
+    "pt": "Português",
+    "pl": "Polski",
+    "nl": "Nederlands",
+    "th": "ไทย"
+  }
+}

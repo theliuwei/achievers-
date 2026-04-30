@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { InboxOutlined } from '@ant-design/icons'
 import { Button, Space, Typography, Upload, message } from 'antd'
 import type { UploadFile, UploadProps } from 'antd'
+import { useTranslation } from 'react-i18next'
 import type { ImportExcelProps } from './types'
 import { resolveApiOrAbsoluteUrl } from './resolveUrl'
 
@@ -17,17 +18,18 @@ export function ImportExcel({
   className,
   style,
 }: ImportExcelProps) {
+  const { t } = useTranslation('common')
   const [fileList, setFileList] = useState<UploadFile[]>([])
 
   const resolvedTemplateUrl = useMemo(() => resolveApiOrAbsoluteUrl(templateUrl), [templateUrl])
 
   const beforeUpload: UploadProps['beforeUpload'] = useCallback((file) => {
     if (!file.name.toLowerCase().endsWith('.xlsx')) {
-      message.error('仅支持上传 .xlsx 文件')
+      message.error(t('excel.import.onlyXlsx'))
       return Upload.LIST_IGNORE
     }
     return true
-  }, [])
+  }, [t])
 
   const customRequest: UploadProps['customRequest'] = useCallback(
     async (options) => {
@@ -35,22 +37,22 @@ export function ImportExcel({
       const raw = file as UploadFile
       const blob = (raw.originFileObj ?? raw) as File | Blob
       if (!(blob instanceof File)) {
-        message.error('无法读取文件')
+        message.error(t('excel.import.readFailed'))
         onError?.(new Error('invalid file'))
         return
       }
       try {
         const result = await api(blob)
-        message.success('上传成功')
+        message.success(t('excel.import.success'))
         onSuccess?.(result)
         rcOnSuccess?.(result)
         setFileList([])
       } catch {
-        message.error('上传失败，请稍后重试')
+        message.error(t('excel.import.failed'))
         onError?.(new Error('upload failed'))
       }
     },
-    [api, onSuccess],
+    [api, onSuccess, t],
   )
 
   const handleChange: UploadProps['onChange'] = useCallback((info) => {
@@ -75,16 +77,16 @@ export function ImportExcel({
           <p className="ant-upload-drag-icon">
             <InboxOutlined />
           </p>
-          <p className="ant-upload-text">点击或拖拽 .xlsx 文件到此区域</p>
-          <p className="ant-upload-hint">每次仅可上传 1 个文件，格式为 Excel（.xlsx）</p>
+          <p className="ant-upload-text">{t('excel.import.dragText')}</p>
+          <p className="ant-upload-hint">{t('excel.import.dragHint')}</p>
         </Upload.Dragger>
       ) : (
         <Upload {...sharedUploadProps}>
-          <Button>选择 .xlsx 文件</Button>
+          <Button>{t('excel.import.selectFile')}</Button>
         </Upload>
       )}
       <Typography.Link href={resolvedTemplateUrl} target="_blank" rel="noopener noreferrer" download>
-        下载模板
+        {t('excel.import.downloadTemplate')}
       </Typography.Link>
     </Space>
   )

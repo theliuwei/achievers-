@@ -1,6 +1,8 @@
 from drf_spectacular.utils import extend_schema
 import django_filters
+from django.utils.translation import gettext_lazy as _
 from django_filters.rest_framework import DjangoFilterBackend
+from django.utils import timezone
 from rest_framework import viewsets
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter, SearchFilter
@@ -11,22 +13,31 @@ from rest_framework.views import APIView
 from brands.models import Brand
 from company.models import CompanyAbout, CompanyContact
 from core.viewsets import SoftDeleteModelViewSet
-from products.models import Product, ProductCategory
-from users.models import UserKind, filter_queryset_by_data_scope, resolve_membership_for_rbac
-from users.permissions import HasRBACForViewAction
+from products.models import Product, ProductCategory, ProductCategoryTranslation, ProductTranslation
+from users.models import (
+    TenantMembership,
+    UserKind,
+    filter_queryset_by_data_scope,
+    resolve_membership_for_rbac,
+)
+from users.permissions import HasRBACForViewAction, HasRBACPermission
 
 from .filters import ProductCategoryFilter, ProductFilter
-from .models import Customer, Inquiry, Quotation, QuotationItem
+from .models import ConsentLog, Customer, Inquiry, Quotation, QuotationItem, VATRate
 from .serializers import (
+    ConsentLogSerializer,
     BrandSerializer,
     CompanyAboutSerializer,
     CompanyContactSerializer,
     CustomerSerializer,
     InquirySerializer,
     ProductCategorySerializer,
+    ProductCategoryTranslationSerializer,
     ProductSerializer,
+    ProductTranslationSerializer,
     QuotationItemSerializer,
     QuotationSerializer,
+    VATRateSerializer,
 )
 
 
@@ -126,7 +137,7 @@ class AboutView(APIView):
     def get(self, request):
         obj = CompanyAbout.objects.first()
         if not obj:
-            return Response({'detail': '未配置关于我们'}, status=404)
+            return Response({'detail': _('About page is not configured.')}, status=404)
         return Response(
             CompanyAboutSerializer(obj, context={'request': request}).data,
         )
@@ -141,7 +152,7 @@ class ContactView(APIView):
     def get(self, request):
         obj = CompanyContact.objects.prefetch_related('persons').first()
         if not obj:
-            return Response({'detail': '未配置联系我们'}, status=404)
+            return Response({'detail': _('Contact page is not configured.')}, status=404)
         return Response(
             CompanyContactSerializer(obj, context={'request': request}).data,
         )
@@ -163,7 +174,11 @@ class ProductCategoryViewSet(viewsets.ReadOnlyModelViewSet):
 
     permission_classes = [AllowAny]
     serializer_class = ProductCategorySerializer
-    queryset = ProductCategory.objects.filter(is_active=True).select_related('brand')
+    queryset = (
+        ProductCategory.objects.filter(is_active=True)
+        .select_related('brand', 'parent')
+        .prefetch_related('translations')
+    )
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = ProductCategoryFilter
     ordering_fields = ['sort_order', 'name', 'id', 'updated_at']
@@ -179,7 +194,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = (
         Product.objects.filter(status=Product.Status.ACTIVE)
         .select_related('category', 'category__brand')
-        .prefetch_related('images')
+        .prefetch_related('images', 'translations', 'category__translations')
     )
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = ProductFilter
@@ -204,7 +219,12 @@ class AdminBrandViewSet(SoftDeleteModelViewSet):
 class AdminProductCategoryViewSet(SoftDeleteModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminUser]
     serializer_class = ProductCategorySerializer
-    queryset = ProductCategory.objects.select_related('brand').all().order_by('brand', 'sort_order', 'name')
+    queryset = (
+        ProductCategory.objects.select_related('brand', 'parent')
+        .prefetch_related('translations')
+        .all()
+        .order_by('brand', 'sort_order', 'name')
+    )
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['brand', 'parent', 'is_active']
     search_fields = ['name', 'slug', 'description', 'external_slug']
@@ -215,11 +235,53 @@ class AdminProductCategoryViewSet(SoftDeleteModelViewSet):
 class AdminProductViewSet(SoftDeleteModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminUser]
     serializer_class = ProductSerializer
-    queryset = Product.objects.select_related('category', 'category__brand').prefetch_related('images').all()
+    queryset = (
+        Product.objects.select_related('category', 'category__brand')
+        .prefetch_related('images', 'translations', 'category__translations')
+        .all()
+    )
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = AdminProductFilter
     search_fields = ['name', 'sku', 'slug', 'summary', 'external_id']
     ordering_fields = ['sort_order', 'name', 'id', 'created_at', 'updated_at']
+
+
+@extend_schema(tags=['后台管理'])
+class AdminProductTranslationViewSet(SoftDeleteModelViewSet):
+    permission_classes = [IsAuthenticated, HasRBACForViewAction]
+    serializer_class = ProductTranslationSerializer
+    queryset = ProductTranslation.objects.select_related('product').all().order_by('-updated_at')
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['product', 'language']
+    search_fields = ['name', 'summary', 'product__name', 'product__sku', 'seo_title']
+    ordering_fields = ['updated_at', 'created_at', 'id', 'language']
+    rbac_action_map = {
+        'list': 'product_translations.view',
+        'retrieve': 'product_translations.view',
+        'create': 'product_translations.create',
+        'update': 'product_translations.update',
+        'partial_update': 'product_translations.update',
+        'destroy': 'product_translations.delete',
+    }
+
+
+@extend_schema(tags=['后台管理'])
+class AdminProductCategoryTranslationViewSet(SoftDeleteModelViewSet):
+    permission_classes = [IsAuthenticated, HasRBACForViewAction]
+    serializer_class = ProductCategoryTranslationSerializer
+    queryset = ProductCategoryTranslation.objects.select_related('category').all().order_by('-updated_at')
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['category', 'language']
+    search_fields = ['name', 'description', 'category__name', 'seo_title']
+    ordering_fields = ['updated_at', 'created_at', 'id', 'language']
+    rbac_action_map = {
+        'list': 'category_translations.view',
+        'retrieve': 'category_translations.view',
+        'create': 'category_translations.create',
+        'update': 'category_translations.update',
+        'partial_update': 'category_translations.update',
+        'destroy': 'category_translations.delete',
+    }
 
 
 class TenantScopedOwnerMixin:
@@ -235,7 +297,7 @@ class TenantScopedOwnerMixin:
             return {}
         membership = resolve_membership_for_rbac(user, self.request)
         if membership is None:
-            raise PermissionDenied('当前用户没有可用的租户上下文。')
+            raise PermissionDenied(_('No available tenant context for current user.'))
         kwargs = {'tenant': membership.tenant}
         if self.owner_field:
             owner = (
@@ -245,7 +307,7 @@ class TenantScopedOwnerMixin:
             )
             accessible_user_ids = membership.get_accessible_user_ids()
             if accessible_user_ids is not None and owner.id not in accessible_user_ids:
-                raise PermissionDenied('不能把数据分配给当前数据权限范围外的用户。')
+                raise PermissionDenied(_('Cannot assign data to user outside current data scope.'))
             kwargs[self.owner_field] = owner
         return kwargs
 
@@ -325,3 +387,131 @@ class QuotationItemViewSet(SoftDeleteModelViewSet):
     filterset_fields = ['quotation', 'product']
     search_fields = ['product_name', 'sku', 'remark']
     ordering_fields = ['id', 'created_at', 'updated_at', 'quantity', 'total_price']
+
+
+@extend_schema(tags=['税务与合规'])
+class VATRateViewSet(SoftDeleteModelViewSet):
+    permission_classes = [IsAuthenticated, HasRBACForViewAction]
+    serializer_class = VATRateSerializer
+    queryset = VATRate.objects.all()
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['country_code', 'is_active', 'is_price_included_default']
+    search_fields = ['country_code', 'name']
+    ordering_fields = ['country_code', 'effective_from', 'rate', 'id']
+    ordering = ['country_code', '-effective_from']
+    rbac_action_map = {
+        'list': 'vat.view',
+        'retrieve': 'vat.view',
+        'create': 'vat.create',
+        'update': 'vat.update',
+        'partial_update': 'vat.update',
+        'destroy': 'vat.delete',
+    }
+
+
+@extend_schema(tags=['税务与合规'])
+class ConsentLogViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated, HasRBACForViewAction]
+    serializer_class = ConsentLogSerializer
+    queryset = ConsentLog.objects.select_related('tenant', 'user').all()
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['consent_type', 'action', 'tenant', 'user']
+    search_fields = ['policy_version', 'ip_address', 'user_agent', 'tenant__name', 'user__username']
+    ordering_fields = ['created_at', 'updated_at', 'id']
+    ordering = ['-created_at']
+    rbac_action_map = {
+        'list': 'consent.view',
+        'retrieve': 'consent.view',
+    }
+
+
+@extend_schema(tags=['税务与合规'])
+class GDPRDataExportView(APIView):
+    permission_classes = [IsAuthenticated, HasRBACPermission]
+    required_rbac_permission = 'gdpr.export'
+
+    def get(self, request):
+        user = request.user
+        memberships = TenantMembership.objects.filter(
+            user=user,
+            is_deleted=False,
+        ).select_related('tenant', 'department')
+        payload = {
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'phone': user.phone,
+                'account_status': user.account_status,
+                'user_kind': user.user_kind,
+                'date_joined': user.date_joined,
+            },
+            'memberships': [
+                {
+                    'tenant_id': item.tenant_id,
+                    'tenant_name': item.tenant.name if item.tenant else None,
+                    'status': item.status,
+                    'title': item.title,
+                    'department': item.department.name if item.department else None,
+                }
+                for item in memberships
+            ],
+            'consents': list(
+                ConsentLog.objects.filter(user=user)
+                .values(
+                    'id',
+                    'created_at',
+                    'consent_type',
+                    'action',
+                    'policy_version',
+                    'ip_address',
+                    'user_agent',
+                    'metadata',
+                )
+                .order_by('-created_at')
+            ),
+            'exported_at': timezone.now(),
+        }
+        return Response(payload)
+
+
+@extend_schema(tags=['税务与合规'])
+class GDPRDataDeleteView(APIView):
+    permission_classes = [IsAuthenticated, HasRBACPermission]
+    required_rbac_permission = 'gdpr.delete'
+
+    def post(self, request):
+        user = request.user
+        # Keep auditability while disabling login and anonymizing personal data.
+        user.is_active = False
+        user.account_status = user.AccountStatus.CLOSED
+        user.email = None
+        user.first_name = ''
+        user.last_name = ''
+        user.phone = ''
+        user.avatar_url = ''
+        user.extra = {}
+        user.save(
+            update_fields=[
+                'is_active',
+                'account_status',
+                'email',
+                'first_name',
+                'last_name',
+                'phone',
+                'avatar_url',
+                'extra',
+                'updated_at',
+            ]
+        )
+        ConsentLog.objects.create(
+            user=user,
+            tenant=getattr(user, 'default_tenant', None),
+            consent_type=ConsentLog.ConsentType.PRIVACY_POLICY,
+            action=ConsentLog.Action.REVOKED,
+            policy_version='self-service-delete',
+            metadata={'source': 'gdpr_delete_api'},
+        )
+        return Response({'detail': _('User data anonymized and account disabled.')})

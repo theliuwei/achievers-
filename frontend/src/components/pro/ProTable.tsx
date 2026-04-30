@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Table } from 'antd'
 import type { TableProps } from 'antd'
 import type { SorterResult } from 'antd/es/table/interface'
+import i18n from '../../i18n'
 import type { ProTableProps, ProTableRequestParams } from './types'
 
 function normalizeSorter<T extends object>(
@@ -81,7 +82,14 @@ function ProTableInner<T extends object = Record<string, unknown>>({
       total,
       showSizeChanger: base.showSizeChanger ?? true,
       showQuickJumper: base.showQuickJumper ?? true,
-      showTotal: base.showTotal ?? ((t) => `共 ${t} 条`),
+      showTotal:
+        base.showTotal ??
+        ((t, range) =>
+          i18n.t('common:pagination.totalRange', {
+            start: range[0],
+            end: range[1],
+            total: t,
+          })),
       onChange: (page, size) => {
         setCurrent(page)
         setPageSize(size ?? pageSize)

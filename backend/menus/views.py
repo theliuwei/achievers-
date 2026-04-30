@@ -43,7 +43,7 @@ class NavMenuView(APIView):
 class NavMenuItemViewSet(SoftDeleteModelViewSet):
     """导航菜单项 CRUD；权限与前端工具栏一致（menus.query / refresh / create / update / delete）。"""
 
-    queryset = NavMenuItem.objects.all().order_by('sort_order', 'id')
+    queryset = NavMenuItem.objects.select_related('parent').all().order_by('sort_order', 'id')
     serializer_class = NavMenuItemSerializer
     permission_classes = [IsAuthenticated, HasNavMenuItemRBAC]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]

@@ -1,10 +1,11 @@
+import i18n from '../../i18n'
 import type { ActionIconType } from './ActionIcon'
 
-/** 与 ActionIcon 类型对应的中文文案，便于按钮、Tooltip、aria-label */
+/** Action icon labels used by tooltip/title/aria-label */
 export const ACTION_ICON_LABELS: Record<ActionIconType, string> = {
-  query: '查询',
-  add: '新增',
-  edit: '修改',
-  delete: '删除',
-  refresh: '刷新',
+  query: i18n.t('common:actions.search'),
+  add: i18n.t('common:adminTable.actions.create'),
+  edit: i18n.t('common:adminTable.edit'),
+  delete: i18n.t('common:adminTable.delete'),
+  refresh: i18n.t('common:actions.refresh'),
 }

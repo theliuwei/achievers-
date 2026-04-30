@@ -1,7 +1,9 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Tag, Tooltip } from 'antd'
+import { useTranslation } from 'react-i18next'
 import { AdminTablePage, type EntityFieldConfig } from '../../components/admin-table'
+import { permissionOptions, searchableSelectProps } from '../../api/options'
 import {
   createRole,
   deleteRole,
@@ -14,48 +16,46 @@ import {
 
 type RoleFormValues = RolePayload & Record<string, unknown>
 
-const activeOptions = [
-  { label: '启用', value: true },
-  { label: '停用', value: false },
-]
-
-const systemOptions = [
-  { label: '是', value: true },
-  { label: '否', value: false },
-]
-
-const dataScopeOptions = [
-  { label: '本人数据', value: 'own' },
-  { label: '部门/下属数据', value: 'department' },
-  { label: '公司全部数据', value: 'tenant' },
-  { label: '平台全部数据', value: 'all' },
-]
-
 const RoleManagePage = () => {
+  const { t } = useTranslation('common')
   const { data: permissions = [] } = useQuery({
     queryKey: ['permissions'],
     queryFn: fetchPermissions,
   })
 
-  const permissionOptions = useMemo(
-    () =>
-      permissions.map((permission) => ({
-        label: `${permission.name}（${permission.code}）`,
-        value: permission.id,
-      })),
-    [permissions],
-  )
-
   const permissionNameMap = useMemo(
     () => new Map(permissions.map((permission) => [permission.id, permission.name])),
     [permissions],
+  )
+  const activeOptions = useMemo(
+    () => [
+      { label: t('status.enabled'), value: true },
+      { label: t('status.disabled'), value: false },
+    ],
+    [t],
+  )
+  const systemOptions = useMemo(
+    () => [
+      { label: t('common.yes'), value: true },
+      { label: t('common.no'), value: false },
+    ],
+    [t],
+  )
+  const dataScopeOptions = useMemo(
+    () => [
+      { label: t('role.scope.own'), value: 'own' },
+      { label: t('role.scope.department'), value: 'department' },
+      { label: t('role.scope.tenant'), value: 'tenant' },
+      { label: t('role.scope.all'), value: 'all' },
+    ],
+    [t],
   )
 
   const fields = useMemo<EntityFieldConfig<RoleRow>[]>(
     () => [
       {
         key: 'id',
-        title: 'ID',
+        title: t('fields.id'),
         valueType: 'digit',
         form: false,
         search: true,
@@ -63,37 +63,37 @@ const RoleManagePage = () => {
       },
       {
         key: 'code',
-        title: '角色代码',
+        title: t('role.fields.code'),
         valueType: 'text',
         search: true,
         form: {
-          rules: [{ required: true, message: '请输入角色代码' }],
+          rules: [{ required: true, message: t('role.validation.codeRequired') }],
           readonlyOnEdit: true,
         },
         table: { width: 180, sorter: true },
       },
       {
         key: 'name',
-        title: '角色名称',
+        title: t('role.fields.name'),
         valueType: 'text',
         search: true,
-        form: { rules: [{ required: true, message: '请输入角色名称' }] },
+        form: { rules: [{ required: true, message: t('role.validation.nameRequired') }] },
         table: { width: 160, sorter: true },
       },
       {
         key: 'description',
-        title: '说明',
+        title: t('role.fields.description'),
         valueType: 'textarea',
         search: true,
         table: { ellipsis: true, width: 240 },
       },
       {
         key: 'data_scope',
-        title: '数据权限',
+        title: t('role.fields.dataScope'),
         valueType: 'select',
         options: dataScopeOptions,
         search: true,
-        form: { rules: [{ required: true, message: '请选择数据权限' }] },
+        form: { rules: [{ required: true, message: t('role.validation.scopeRequired') }] },
         table: {
           width: 140,
           render: (_, record) => (
@@ -103,21 +103,20 @@ const RoleManagePage = () => {
       },
       {
         key: 'permissions',
-        title: '权限',
+        title: t('role.fields.permissions'),
         valueType: 'select',
-        options: permissionOptions,
         search: false,
         form: {
+          request: permissionOptions,
           componentProps: {
+            ...searchableSelectProps,
             mode: 'multiple',
-            showSearch: true,
-            optionFilterProp: 'label',
           },
         },
         table: { width: 280 },
         render: (_, record) => {
           const ids = record.permissions ?? []
-          if (!ids.length) return <Tag>未绑定</Tag>
+          if (!ids.length) return <Tag>{t('common.unbound')}</Tag>
           const visible = ids.slice(0, 3)
           return (
             <>
@@ -125,7 +124,7 @@ const RoleManagePage = () => {
                 <Tag key={id}>{permissionNameMap.get(id) ?? `#${id}`}</Tag>
               ))}
               {ids.length > visible.length ? (
-                <Tooltip title={ids.map((id) => permissionNameMap.get(id) ?? `#${id}`).join('、')}>
+                <Tooltip title={ids.map((id) => permissionNameMap.get(id) ?? `#${id}`).join(', ')}>
                   <Tag>+{ids.length - visible.length}</Tag>
                 </Tooltip>
               ) : null}
@@ -135,39 +134,39 @@ const RoleManagePage = () => {
       },
       {
         key: 'is_active',
-        title: '启用',
+        title: t('status.label'),
         valueType: 'select',
         options: activeOptions,
         search: true,
-        form: { rules: [{ required: true, message: '请选择启用状态' }] },
+        form: { rules: [{ required: true, message: t('role.validation.statusRequired') }] },
         table: {
           width: 96,
           render: (_, record) => (
             <Tag color={record.is_active ? 'green' : 'default'}>
-              {record.is_active ? '启用' : '停用'}
+              {record.is_active ? t('status.enabled') : t('status.disabled')}
             </Tag>
           ),
         },
       },
       {
         key: 'is_system',
-        title: '系统内置',
+        title: t('role.fields.isSystem'),
         valueType: 'select',
         options: systemOptions,
         search: true,
-        form: { rules: [{ required: true, message: '请选择是否系统内置' }] },
+        form: { rules: [{ required: true, message: t('role.validation.systemRequired') }] },
         table: {
           width: 110,
           render: (_, record) => (
             <Tag color={record.is_system ? 'blue' : 'default'}>
-              {record.is_system ? '是' : '否'}
+              {record.is_system ? t('common.yes') : t('common.no')}
             </Tag>
           ),
         },
       },
       {
         key: 'created_at',
-        title: '创建时间',
+        title: t('fields.createdAt'),
         valueType: 'dateTime',
         form: false,
         search: false,
@@ -175,19 +174,19 @@ const RoleManagePage = () => {
       },
       {
         key: 'updated_at',
-        title: '更新时间',
+        title: t('fields.updatedAt'),
         valueType: 'dateTime',
         form: false,
         search: false,
         table: { width: 170, sorter: true },
       },
     ],
-    [permissionNameMap, permissionOptions],
+    [activeOptions, dataScopeOptions, permissionNameMap, systemOptions, t],
   )
 
   return (
     <AdminTablePage<RoleRow, RoleFormValues>
-      listTitle="应用列表"
+      listTitle={t('common.listTitle')}
       fields={fields}
       api={{
         list: fetchRoles,
@@ -196,8 +195,8 @@ const RoleManagePage = () => {
         remove: (id) => deleteRole(Number(id)),
       }}
       rowKey="id"
-      createTitle="新增角色"
-      editTitle="编辑角色"
+      createTitle={t('role.actions.create')}
+      editTitle={t('role.actions.edit')}
       createDefaults={{ data_scope: 'own', is_active: true, is_system: false, permissions: [] }}
       transformSubmit={(values) => ({
         code: values.code.trim(),

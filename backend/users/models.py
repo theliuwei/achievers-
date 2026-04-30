@@ -23,16 +23,16 @@ class UserInfoManager(UserManager.from_queryset(BaseQuerySet)):
 class Permission(BaseModel):
     """细粒度权限点，供角色绑定；code 在业务代码中用于校验。"""
 
-    code = models.CharField('权限代码', max_length=128, unique=True, db_index=True)
-    name = models.CharField('名称', max_length=150)
-    description = models.TextField('说明', blank=True)
-    sort_order = models.PositiveSmallIntegerField('排序', default=0)
+    code = models.CharField(_('Permission Code'), max_length=128, unique=True, db_index=True)
+    name = models.CharField(_('Name'), max_length=150)
+    description = models.TextField(_('Description'), blank=True)
+    sort_order = models.PositiveSmallIntegerField(_('Sort Order'), default=0)
 
     class Meta:
         db_table = 'Permission'
         ordering = ['sort_order', 'code']
-        verbose_name = '权限'
-        verbose_name_plural = '权限'
+        verbose_name = _('Permission')
+        verbose_name_plural = _('Permissions')
 
     def __str__(self) -> str:
         return f'{self.name} ({self.code})'
@@ -47,25 +47,25 @@ class Role(BaseModel):
         TENANT = 'tenant', _('公司全部数据')
         ALL = 'all', _('平台全部数据')
 
-    code = models.SlugField('角色代码', max_length=64, unique=True, db_index=True)
-    name = models.CharField('名称', max_length=100)
-    description = models.TextField('说明', blank=True)
+    code = models.SlugField(_('Role Code'), max_length=64, unique=True, db_index=True)
+    name = models.CharField(_('Name'), max_length=100)
+    description = models.TextField(_('Description'), blank=True)
     data_scope = models.CharField(
-        '数据权限范围',
+        _('Data Scope'),
         max_length=20,
         choices=DataScope.choices,
         default=DataScope.OWN,
         db_index=True,
     )
-    is_active = models.BooleanField('启用', default=True)
+    is_active = models.BooleanField(_('Active'), default=True)
     is_system = models.BooleanField(
-        '系统内置',
+        _('System Built-in'),
         default=False,
-        help_text='内置角色不建议删除，仅可通过后台管理权限集合。',
+        help_text=_('Built-in roles should not be deleted directly; manage permissions from admin.'),
     )
     permissions = models.ManyToManyField(
         Permission,
-        verbose_name='权限',
+        verbose_name=_('Permissions'),
         blank=True,
         related_name='roles',
     )
@@ -73,8 +73,8 @@ class Role(BaseModel):
     class Meta:
         db_table = 'Role'
         ordering = ['code']
-        verbose_name = '角色'
-        verbose_name_plural = '角色'
+        verbose_name = _('Role')
+        verbose_name_plural = _('Roles')
 
     def __str__(self) -> str:
         return self.name
@@ -117,44 +117,44 @@ class Tenant(BaseModel):
     订阅与合同一般落在租户层，而不是用户表。
     """
 
-    name = models.CharField('名称', max_length=200)
-    code = models.SlugField('租户代码', max_length=64, unique=True, db_index=True)
-    address = models.TextField('公司地址', blank=True, default='')
-    contact_name = models.CharField('联系人', max_length=100, blank=True, default='')
-    contact_phone = models.CharField('联系电话', max_length=32, blank=True, default='')
-    contact_email = models.EmailField('联系邮箱', blank=True, default='')
+    name = models.CharField(_('Name'), max_length=200)
+    code = models.SlugField(_('Tenant Code'), max_length=64, unique=True, db_index=True)
+    address = models.TextField(_('Company Address'), blank=True, default='')
+    contact_name = models.CharField(_('Contact Name'), max_length=100, blank=True, default='')
+    contact_phone = models.CharField(_('Contact Phone'), max_length=32, blank=True, default='')
+    contact_email = models.EmailField(_('Contact Email'), blank=True, default='')
     primary_admin = models.ForeignKey(
         'users.UserInfo',
-        verbose_name='主管理员',
+        verbose_name=_('Primary Admin'),
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
         related_name='primary_admin_tenants',
     )
-    is_active = models.BooleanField('启用', default=True, db_index=True)
+    is_active = models.BooleanField(_('Active'), default=True, db_index=True)
     subscription_starts_at = models.DateTimeField(
-        '订阅/合同开始时间',
+        _('Subscription Start Time'),
         null=True,
         blank=True,
         db_index=True,
     )
     subscription_expires_at = models.DateTimeField(
-        '订阅/合同到期时间',
+        _('Subscription Expire Time'),
         null=True,
         blank=True,
         db_index=True,
-        help_text='B2B SaaS：按公司维度记录；与单用户会员解耦。',
+        help_text=_('B2B SaaS: subscription is tracked per tenant, not per single user.'),
     )
-    max_members = models.PositiveIntegerField('员工账号上限', default=20)
-    storage_quota_mb = models.PositiveIntegerField('附件容量上限(MB)', default=1024)
-    storage_used_mb = models.PositiveIntegerField('附件已用容量(MB)', default=0)
-    locked_reason = models.CharField('锁定原因', max_length=200, blank=True, default='')
+    max_members = models.PositiveIntegerField(_('Max Members'), default=20)
+    storage_quota_mb = models.PositiveIntegerField(_('Storage Quota (MB)'), default=1024)
+    storage_used_mb = models.PositiveIntegerField(_('Storage Used (MB)'), default=0)
+    locked_reason = models.CharField(_('Locked Reason'), max_length=200, blank=True, default='')
 
     class Meta:
         db_table = 'Tenant'
         ordering = ['code', 'id']
-        verbose_name = '租户'
-        verbose_name_plural = '租户'
+        verbose_name = _('Tenant')
+        verbose_name_plural = _('Tenants')
 
     def __str__(self) -> str:
         return f'{self.name} ({self.code})'
@@ -185,22 +185,22 @@ class Tenant(BaseModel):
 class TenantRegistrationApplication(BaseModel):
     """客户公司公开入驻申请，审核通过后创建租户与主管理员。"""
 
-    company_name = models.CharField('公司名称', max_length=200)
-    company_code = models.SlugField('公司代码', max_length=64, db_index=True)
-    company_address = models.TextField('公司地址', blank=True, default='')
-    contact_name = models.CharField('联系人', max_length=100, blank=True, default='')
-    contact_phone = models.CharField('联系电话', max_length=32, blank=True, default='')
-    contact_email = models.EmailField('联系邮箱', blank=True, default='')
-    admin_username = models.CharField('主管理员用户名', max_length=150, db_index=True)
-    admin_email = models.EmailField('主管理员邮箱', db_index=True)
-    admin_first_name = models.CharField('主管理员名', max_length=150, blank=True, default='')
-    admin_last_name = models.CharField('主管理员姓', max_length=150, blank=True, default='')
-    admin_phone = models.CharField('主管理员手机', max_length=32, blank=True, default='')
-    admin_password_hash = models.CharField('主管理员密码哈希', max_length=128)
-    requested_max_members = models.PositiveIntegerField('申请员工账号上限', default=20)
-    requested_storage_quota_mb = models.PositiveIntegerField('申请附件容量(MB)', default=1024)
+    company_name = models.CharField(_('Company Name'), max_length=200)
+    company_code = models.SlugField(_('Company Code'), max_length=64, db_index=True)
+    company_address = models.TextField(_('Company Address'), blank=True, default='')
+    contact_name = models.CharField(_('Contact Name'), max_length=100, blank=True, default='')
+    contact_phone = models.CharField(_('Contact Phone'), max_length=32, blank=True, default='')
+    contact_email = models.EmailField(_('Contact Email'), blank=True, default='')
+    admin_username = models.CharField(_('Admin Username'), max_length=150, db_index=True)
+    admin_email = models.EmailField(_('Admin Email'), db_index=True)
+    admin_first_name = models.CharField(_('Admin First Name'), max_length=150, blank=True, default='')
+    admin_last_name = models.CharField(_('Admin Last Name'), max_length=150, blank=True, default='')
+    admin_phone = models.CharField(_('Admin Phone'), max_length=32, blank=True, default='')
+    admin_password_hash = models.CharField(_('Admin Password Hash'), max_length=128)
+    requested_max_members = models.PositiveIntegerField(_('Requested Max Members'), default=20)
+    requested_storage_quota_mb = models.PositiveIntegerField(_('Requested Storage Quota (MB)'), default=1024)
     status = models.CharField(
-        '审核状态',
+        _('Review Status'),
         max_length=16,
         choices=TenantApplicationStatus.choices,
         default=TenantApplicationStatus.PENDING,
@@ -208,17 +208,17 @@ class TenantRegistrationApplication(BaseModel):
     )
     reviewed_by = models.ForeignKey(
         'users.UserInfo',
-        verbose_name='审核人',
+        verbose_name=_('Reviewed By'),
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
         related_name='reviewed_tenant_applications',
     )
-    reviewed_at = models.DateTimeField('审核时间', null=True, blank=True)
-    reject_reason = models.TextField('拒绝原因', blank=True, default='')
+    reviewed_at = models.DateTimeField(_('Reviewed At'), null=True, blank=True)
+    reject_reason = models.TextField(_('Reject Reason'), blank=True, default='')
     tenant = models.OneToOneField(
         Tenant,
-        verbose_name='创建的租户',
+        verbose_name=_('Created Tenant'),
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -228,8 +228,8 @@ class TenantRegistrationApplication(BaseModel):
     class Meta:
         db_table = 'TenantRegistrationApplication'
         ordering = ['-created_at', '-id']
-        verbose_name = '租户入驻申请'
-        verbose_name_plural = '租户入驻申请'
+        verbose_name = _('Tenant Registration Application')
+        verbose_name_plural = _('Tenant Registration Applications')
 
     def __str__(self) -> str:
         return f'{self.company_name} ({self.get_status_display()})'
@@ -240,14 +240,14 @@ class Department(BaseModel):
 
     tenant = models.ForeignKey(
         Tenant,
-        verbose_name='租户',
+        verbose_name=_('Tenant'),
         on_delete=models.CASCADE,
         related_name='departments',
     )
-    name = models.CharField('部门名称', max_length=100)
+    name = models.CharField(_('Department Name'), max_length=100)
     parent = models.ForeignKey(
         'self',
-        verbose_name='上级部门',
+        verbose_name=_('Parent Department'),
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -255,20 +255,20 @@ class Department(BaseModel):
     )
     manager = models.ForeignKey(
         'users.UserInfo',
-        verbose_name='部门负责人',
+        verbose_name=_('Department Manager'),
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
         related_name='managed_departments',
     )
-    sort_order = models.PositiveIntegerField('排序', default=0)
-    is_active = models.BooleanField('启用', default=True, db_index=True)
+    sort_order = models.PositiveIntegerField(_('Sort Order'), default=0)
+    is_active = models.BooleanField(_('Active'), default=True, db_index=True)
 
     class Meta:
         db_table = 'Department'
         ordering = ['tenant_id', 'sort_order', 'id']
-        verbose_name = '部门'
-        verbose_name_plural = '部门'
+        verbose_name = _('Department')
+        verbose_name_plural = _('Departments')
         constraints = [
             models.UniqueConstraint(
                 fields=('tenant', 'name'),
@@ -289,27 +289,27 @@ class TenantMembership(BaseModel):
 
     user = models.ForeignKey(
         'users.UserInfo',
-        verbose_name='用户',
+        verbose_name=_('User'),
         on_delete=models.CASCADE,
         related_name='tenant_memberships',
     )
     tenant = models.ForeignKey(
         Tenant,
-        verbose_name='租户',
+        verbose_name=_('Tenant'),
         on_delete=models.CASCADE,
         related_name='memberships',
     )
     status = models.CharField(
-        '成员状态',
+        _('Membership Status'),
         max_length=16,
         choices=MembershipStatus.choices,
         default=MembershipStatus.ACTIVE,
         db_index=True,
     )
-    title = models.CharField('职位/备注', max_length=100, blank=True, default='')
+    title = models.CharField(_('Title/Note'), max_length=100, blank=True, default='')
     department = models.ForeignKey(
         Department,
-        verbose_name='所属部门',
+        verbose_name=_('Department'),
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -317,7 +317,7 @@ class TenantMembership(BaseModel):
     )
     reports_to = models.ForeignKey(
         'self',
-        verbose_name='直属上级',
+        verbose_name=_('Reports To'),
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -325,7 +325,7 @@ class TenantMembership(BaseModel):
     )
     invited_by = models.ForeignKey(
         'users.UserInfo',
-        verbose_name='邀请人',
+        verbose_name=_('Invited By'),
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -333,15 +333,15 @@ class TenantMembership(BaseModel):
     )
     roles = models.ManyToManyField(
         Role,
-        verbose_name='角色（本租户内）',
+        verbose_name=_('Roles (Within Tenant)'),
         blank=True,
         related_name='tenant_memberships',
     )
 
     class Meta:
         db_table = 'TenantMembership'
-        verbose_name = '租户成员'
-        verbose_name_plural = '租户成员'
+        verbose_name = _('Tenant Membership')
+        verbose_name_plural = _('Tenant Memberships')
         constraints = [
             models.UniqueConstraint(
                 fields=('user', 'tenant'),
@@ -446,57 +446,57 @@ class UserInfo(AbstractUser, BaseModel):
         FEMALE = 'female', _('女')
         OTHER = 'other', _('其他')
 
-    email = models.EmailField('邮箱', unique=True, null=True, blank=True, db_index=True)
+    email = models.EmailField(_('Email'), unique=True, null=True, blank=True, db_index=True)
     account_status = models.CharField(
-        '账号状态',
+        _('Account Status'),
         max_length=20,
         choices=AccountStatus.choices,
         default=AccountStatus.ACTIVE,
         db_index=True,
     )
-    failed_login_count = models.PositiveIntegerField('连续登录失败次数', default=0)
-    lockout_started_at = models.DateTimeField('账户锁定起始时间', null=True, blank=True, db_index=True)
-    mfa_enabled = models.BooleanField('启用双因素认证', default=False, db_index=True)
-    avatar_url = models.URLField('头像地址', max_length=500, blank=True, default='')
-    gender = models.CharField('性别', max_length=8, choices=Gender.choices, blank=True, default='')
+    failed_login_count = models.PositiveIntegerField(_('Failed Login Count'), default=0)
+    lockout_started_at = models.DateTimeField(_('Lockout Started At'), null=True, blank=True, db_index=True)
+    mfa_enabled = models.BooleanField(_('MFA Enabled'), default=False, db_index=True)
+    avatar_url = models.URLField(_('Avatar URL'), max_length=500, blank=True, default='')
+    gender = models.CharField(_('Gender'), max_length=8, choices=Gender.choices, blank=True, default='')
     phone = models.CharField(
-        '手机号码 (E.164)',
+        _('Phone Number (E.164)'),
         max_length=20,
         blank=True,
         default='',
         db_index=True,
-        help_text='国际 E.164，如 +8613800138000',
+        help_text=_('International E.164 format, e.g. +8613800138000'),
     )
-    email_verified_at = models.DateTimeField('邮箱验证完成时间', null=True, blank=True, db_index=True)
-    phone_verified_at = models.DateTimeField('手机验证完成时间', null=True, blank=True, db_index=True)
+    email_verified_at = models.DateTimeField(_('Email Verified At'), null=True, blank=True, db_index=True)
+    phone_verified_at = models.DateTimeField(_('Phone Verified At'), null=True, blank=True, db_index=True)
     user_kind = models.CharField(
-        '身份类型',
+        _('User Kind'),
         max_length=20,
         choices=UserKind.choices,
         default=UserKind.TENANT,
         db_index=True,
-        help_text='平台 = 可跨租户的运营/支持；企业 = 客户侧成员，权限按 TenantMembership 生效。',
+        help_text=_('Platform users can work across tenants; tenant users use TenantMembership permissions.'),
     )
     default_tenant = models.ForeignKey(
         Tenant,
-        verbose_name='默认工作租户',
+        verbose_name=_('Default Tenant'),
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='users_with_default_tenant',
         db_index=True,
-        help_text='多公司成员时，登录后默认进入的组织；可配合请求头 X-Tenant-Id 切换。',
+        help_text=_('Default tenant after login; can be switched by X-Tenant-Id header.'),
     )
-    wechat_bound_at = models.DateTimeField('微信绑定时间', null=True, blank=True)
-    extra = models.JSONField('扩展字段', default=dict, blank=True, help_text='非结构化键值，业务自定义')
+    wechat_bound_at = models.DateTimeField(_('WeChat Bound At'), null=True, blank=True)
+    extra = models.JSONField(_('Extra Data'), default=dict, blank=True, help_text=_('Unstructured key-value data for business customization.'))
 
     objects = UserInfoManager()
     all_objects = models.Manager()
 
     class Meta:
         db_table = 'UserInfo'
-        verbose_name = '用户'
-        verbose_name_plural = '用户'
+        verbose_name = _('User')
+        verbose_name_plural = _('Users')
         ordering = ['-date_joined', 'id']
 
     def __str__(self) -> str:
@@ -537,25 +537,25 @@ class UserProfile(BaseModel):
         'users.UserInfo',
         on_delete=models.CASCADE,
         related_name='rbac_profile',
-        verbose_name='用户',
+        verbose_name=_('User'),
     )
     roles = models.ManyToManyField(
         Role,
-        verbose_name='角色',
+        verbose_name=_('Roles'),
         blank=True,
         related_name='user_profiles',
     )
     pending_approval = models.BooleanField(
-        '待审批注册',
+        _('Pending Approval'),
         default=False,
         db_index=True,
-        help_text='公开注册且尚未通过管理员审批时为 True；审批通过后清零。',
+        help_text=_('True when public registration is awaiting admin approval.'),
     )
 
     class Meta:
         db_table = 'UserProfile'
-        verbose_name = '用户扩展(RBAC)'
-        verbose_name_plural = '用户扩展(RBAC)'
+        verbose_name = _('User Profile (RBAC)')
+        verbose_name_plural = _('User Profiles (RBAC)')
 
     def __str__(self) -> str:
         return f'RBAC:{self.user_id}'

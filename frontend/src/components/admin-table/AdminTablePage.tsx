@@ -1,24 +1,86 @@
 import { useMemo, useRef, useState } from 'react'
-import type { Key } from 'react'
-import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
-import { ModalForm, ProTable } from '@ant-design/pro-components'
+import type { CSSProperties, Key, MouseEvent as ReactMouseEvent } from 'react'
+import { ArrowLeftOutlined, DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
+import { ProForm, ProTable } from '@ant-design/pro-components'
 import type { ActionType, ProColumns, ProFormInstance } from '@ant-design/pro-components'
 import { App, Button, Card, Space, Typography } from 'antd'
+import { useTranslation } from 'react-i18next'
+import i18n from '../../i18n'
+import { useLocaleFormat } from '../../i18n/useLocaleFormat'
 import { optionsToValueEnum, renderFormItem } from './renderers'
 import type { AdminTablePageProps, EntityRecord } from './types'
 
 const { Text } = Typography
+const MIN_COLUMN_WIDTH = 80
+
+type ResizableHeaderCellProps = React.ThHTMLAttributes<HTMLTableCellElement> & {
+  onColumnResize?: (nextWidth: number) => void
+}
+
+const resizeHandleStyle: CSSProperties = {
+  position: 'absolute',
+  top: 0,
+  right: -4,
+  width: 8,
+  height: '100%',
+  cursor: 'col-resize',
+  userSelect: 'none',
+  zIndex: 1,
+}
+
+const ResizableHeaderCell = ({
+  onColumnResize,
+  style,
+  children,
+  ...rest
+}: ResizableHeaderCellProps) => {
+  const onMouseDown = (event: ReactMouseEvent<HTMLSpanElement>) => {
+    if (!onColumnResize) return
+    event.preventDefault()
+    event.stopPropagation()
+    const th = event.currentTarget.parentElement as HTMLTableCellElement | null
+    const startWidth = Math.max(
+      MIN_COLUMN_WIDTH,
+      Math.round((th?.getBoundingClientRect().width ?? 0) || MIN_COLUMN_WIDTH),
+    )
+    const startX = event.clientX
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const delta = moveEvent.clientX - startX
+      onColumnResize(Math.max(MIN_COLUMN_WIDTH, startWidth + delta))
+    }
+    const onMouseUp = () => {
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
+    }
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+  }
+
+  return (
+    <th
+      {...rest}
+      style={{
+        ...style,
+        position: 'relative',
+      }}
+    >
+      {children}
+      {onColumnResize ? <span style={resizeHandleStyle} onMouseDown={onMouseDown} /> : null}
+    </th>
+  )
+}
 
 export function AdminTablePage<
   T extends EntityRecord,
   FormValues extends EntityRecord = EntityRecord,
 >({
   rowKey = 'id' as keyof T & string,
-  listTitle = '应用列表',
+  listTitle,
   fields,
   api,
-  createTitle = '新增',
-  editTitle = '编辑',
+  createTitle,
+  editTitle,
   createDefaults,
   recordToFormValues,
   transformSubmit,
@@ -29,17 +91,26 @@ export function AdminTablePage<
   extraActions,
 }: AdminTablePageProps<T, FormValues>) {
   const { message, modal } = App.useApp()
+  const { t } = useTranslation('common')
+  const { formatNumber } = useLocaleFormat()
   const actionRef = useRef<ActionType>(null)
   const formRef = useRef<ProFormInstance>(null)
   const [selectedRows, setSelectedRows] = useState<T[]>([])
-  const [modalOpen, setModalOpen] = useState(false)
+  const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<T | null>(null)
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>({})
+  const resolvedListTitle = listTitle ?? i18n.t('common:common.listTitle')
+  const resolvedCreateTitle = createTitle ?? t('adminTable.create')
+  const resolvedEditTitle = editTitle ?? t('adminTable.edit')
 
   const columns = useMemo<ProColumns<T>[]>(() => {
     const generated = fields.map((field): ProColumns<T> => {
       const table = field.table === false ? {} : (field.table ?? {})
       const search = field.search === true ? {} : field.search
-      return {
+      const columnKey = String(field.dataIndex ?? field.key)
+      const configuredWidth = typeof table.width === 'number' ? table.width : undefined
+      const width = columnWidths[columnKey] ?? configuredWidth
+      const column: ProColumns<T> = {
         title: field.title,
         dataIndex: field.dataIndex ?? field.key,
         valueType: field.valueType === 'textarea' ? 'text' : field.valueType,
@@ -47,9 +118,39 @@ export function AdminTablePage<
         hideInTable: field.table === false,
         hideInSearch: field.search === false || field.search == null,
         render: field.render,
+        // Keep dense table layout: long cell content is truncated and full text
+        // is available on hover. Field-level table.ellipsis can override this.
+        ellipsis: table.ellipsis ?? true,
         ...table,
+        width,
         ...(search && typeof search === 'object' ? search : {}),
       }
+      ;(column as ProColumns<T> & { onHeaderCell?: () => ResizableHeaderCellProps }).onHeaderCell =
+        () => ({
+          onColumnResize: (nextWidth) => {
+            setColumnWidths((prev) => ({
+              ...prev,
+              [columnKey]: Math.round(nextWidth),
+            }))
+          },
+        })
+      const existingFieldProps = (column as { fieldProps?: unknown }).fieldProps
+      if (!existingFieldProps || typeof existingFieldProps !== 'object' || Array.isArray(existingFieldProps)) {
+        const isSelect = column.valueType === 'select'
+        ;(column as { fieldProps?: Record<string, unknown> }).fieldProps = {
+          ...(typeof existingFieldProps === 'object' && !Array.isArray(existingFieldProps)
+            ? (existingFieldProps as Record<string, unknown>)
+            : {}),
+          placeholder: isSelect ? t('form.placeholders.select') : t('form.placeholders.input'),
+        }
+      } else if (!('placeholder' in (existingFieldProps as Record<string, unknown>))) {
+        const isSelect = column.valueType === 'select'
+        ;(column as { fieldProps?: Record<string, unknown> }).fieldProps = {
+          ...(existingFieldProps as Record<string, unknown>),
+          placeholder: isSelect ? t('form.placeholders.select') : t('form.placeholders.input'),
+        }
+      }
+      return column
     })
 
     if (!canUpdate && !extraActions) {
@@ -59,10 +160,18 @@ export function AdminTablePage<
     return [
       ...generated,
       {
-        title: '操作',
+        title: t('adminTable.actions'),
         valueType: 'option',
-        width: 120,
+        width: columnWidths.__actions ?? 120,
         fixed: 'right',
+        onHeaderCell: () => ({
+          onColumnResize: (nextWidth: number) => {
+            setColumnWidths((prev) => ({
+              ...prev,
+              __actions: Math.round(nextWidth),
+            }))
+          },
+        }),
         render: (_, record) => (
           <Space>
             {canUpdate && api.update ? (
@@ -72,10 +181,10 @@ export function AdminTablePage<
                 icon={<EditOutlined />}
                 onClick={() => {
                   setEditing(record)
-                  setModalOpen(true)
+                  setFormOpen(true)
                 }}
               >
-                编辑
+                {t('adminTable.edit')}
               </Button>
             ) : null}
             {extraActions?.(record, actionRef.current ?? undefined)}
@@ -83,15 +192,15 @@ export function AdminTablePage<
         ),
       },
     ]
-  }, [api.update, canUpdate, extraActions, fields])
+  }, [api.update, canUpdate, columnWidths, extraActions, fields, t])
 
   const openCreate = () => {
     setEditing(null)
-    setModalOpen(true)
+    setFormOpen(true)
   }
 
-  const closeModal = () => {
-    setModalOpen(false)
+  const closeForm = () => {
+    setFormOpen(false)
     setEditing(null)
   }
 
@@ -101,17 +210,17 @@ export function AdminTablePage<
       if (editing) {
         if (!api.update) return false
         await api.update(editing[rowKey] as Key, payload)
-        message.success('保存成功')
+        message.success(t('messages.saveSuccess'))
       } else {
         if (!api.create) return false
         await api.create(payload)
-        message.success('新增成功')
+        message.success(t('messages.createSuccess'))
       }
-      closeModal()
+      closeForm()
       actionRef.current?.reload()
       return true
     } catch (error) {
-      message.error(error instanceof Error ? error.message : '提交失败，请稍后重试')
+      message.error(error instanceof Error ? error.message : t('messages.submitFailed'))
       return false
     }
   }
@@ -121,22 +230,65 @@ export function AdminTablePage<
       return
     }
     modal.confirm({
-      title: '确认删除',
-      content: `将删除 ${selectedRows.length} 条记录，是否继续？`,
-      okText: '删除',
+      title: t('adminTable.confirmDeleteTitle'),
+      content: t('adminTable.confirmDeleteContent', { count: formatNumber(selectedRows.length) }),
+      okText: t('adminTable.delete'),
       okType: 'danger',
       onOk: async () => {
         try {
           await Promise.all(selectedRows.map((row) => api.remove?.(row[rowKey] as Key)))
-          message.success('删除成功')
+          message.success(t('messages.deleteSuccess'))
           setSelectedRows([])
           actionRef.current?.reload()
         } catch (error) {
-          message.error(error instanceof Error ? error.message : '删除失败，请稍后重试')
+          message.error(error instanceof Error ? error.message : t('messages.deleteFailed'))
           throw error
         }
       },
     })
+  }
+
+  if (formOpen) {
+    const resolvedFormTitle = editing ? resolvedEditTitle : resolvedCreateTitle
+    const initialValues = editing
+      ? (recordToFormValues?.(editing) ?? (editing as unknown as Partial<FormValues>))
+      : createDefaults
+
+    return (
+      <Card
+        bordered={false}
+        title={resolvedFormTitle}
+        extra={
+          <Button icon={<ArrowLeftOutlined />} onClick={closeForm}>
+            {t('adminTable.backToList')}
+          </Button>
+        }
+        styles={{ body: { padding: 24 } }}
+      >
+        <ProForm<FormValues>
+          key={editing ? String(editing[rowKey]) : 'create'}
+          formRef={formRef}
+          layout="vertical"
+          initialValues={initialValues}
+          onFinish={submit}
+          grid
+          submitter={{
+            searchConfig: { submitText: t('actions.confirm'), resetText: t('actions.cancel') },
+            resetButtonProps: {
+              preventDefault: true,
+              onClick: closeForm,
+            },
+            render: (_, dom) => (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>{dom}</div>
+            ),
+          }}
+        >
+          {fields
+            .filter((field) => field.form !== false)
+            .map((field) => renderFormItem(field, editing))}
+        </ProForm>
+      </Card>
+    )
   }
 
   return (
@@ -155,31 +307,50 @@ export function AdminTablePage<
         }}
         search={{
           labelWidth: 'auto',
+          searchText: t('actions.search'),
+          resetText: t('actions.reset'),
+          collapseRender: (collapsed) =>
+            collapsed ? t('actions.expand') : t('actions.collapse'),
           optionRender: (_, __, dom) => {
             const [resetButton, submitButton, ...restButtons] = dom
             return [submitButton, resetButton, ...restButtons].filter(Boolean)
           },
         }}
-        pagination={{ defaultPageSize: 20, showSizeChanger: true }}
+        pagination={{
+          defaultPageSize: 20,
+          showSizeChanger: true,
+          showTotal: (total, range) =>
+            t('pagination.totalRange', {
+              start: formatNumber(range[0]),
+              end: formatNumber(range[1]),
+              total: formatNumber(total),
+            }),
+        }}
         scroll={{ x: tableScrollX }}
+        components={{
+          header: {
+            cell: ResizableHeaderCell,
+          },
+        }}
         rowSelection={{
           onChange: (_, rows) => setSelectedRows(rows),
         }}
         tableAlertRender={({ selectedRowKeys }) => (
           <Text>
-            已选择 <Text strong>{selectedRowKeys.length}</Text> 项
+            {t('adminTable.selected')} <Text strong>{formatNumber(selectedRowKeys.length)}</Text>{' '}
+            {t('adminTable.items')}
           </Text>
         )}
         tableAlertOptionRender={() => (
           <Button type="link" size="small" onClick={() => setSelectedRows([])}>
-            清空
+            {t('actions.clear')}
           </Button>
         )}
-        headerTitle={listTitle}
+        headerTitle={resolvedListTitle}
         toolBarRender={() => [
           canCreate && api.create ? (
             <Button key="create" type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-              新增
+              {t('adminTable.create')}
             </Button>
           ) : null,
           canDelete && api.remove ? (
@@ -190,29 +361,11 @@ export function AdminTablePage<
               disabled={!selectedRows.length}
               onClick={deleteRows}
             >
-              删除
+              {t('adminTable.delete')}
             </Button>
           ) : null,
         ]}
       />
-
-      <ModalForm<FormValues>
-        formRef={formRef}
-        open={modalOpen}
-        title={editing ? editTitle : createTitle}
-        modalProps={{ destroyOnClose: true, onCancel: closeModal }}
-        initialValues={
-          editing
-            ? (recordToFormValues?.(editing) ?? (editing as unknown as Partial<FormValues>))
-            : createDefaults
-        }
-        onFinish={submit}
-        grid
-      >
-        {fields
-          .filter((field) => field.form !== false)
-          .map((field) => renderFormItem(field, editing))}
-      </ModalForm>
     </Card>
   )
 }

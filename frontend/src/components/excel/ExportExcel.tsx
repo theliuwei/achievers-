@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, message } from 'antd'
+import { useTranslation } from 'react-i18next'
 import type { ExportExcelProps } from './types'
 
 /** 无扩展名时默认 `.xlsx`；已含 `.xlsx`/`.csv` 等则保持原样 */
@@ -16,10 +17,11 @@ export function ExportExcel<P extends Record<string, unknown> = Record<string, u
   params,
   fileName,
   buttonProps,
-  children = '导出 Excel',
+  children,
   className,
   style,
 }: ExportExcelProps<P>) {
+  const { t } = useTranslation('common')
   const [loading, setLoading] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
 
@@ -47,7 +49,7 @@ export function ExportExcel<P extends Record<string, unknown> = Record<string, u
         document.body.appendChild(a)
         a.click()
         a.remove()
-        message.success('导出成功')
+        message.success(t('excel.export.success'))
       } finally {
         URL.revokeObjectURL(url)
       }
@@ -55,11 +57,11 @@ export function ExportExcel<P extends Record<string, unknown> = Record<string, u
       if (err instanceof DOMException && err.name === 'AbortError') {
         return
       }
-      message.error('导出失败，请稍后重试')
+      message.error(t('excel.export.failed'))
     } finally {
       setLoading(false)
     }
-  }, [api, params, fileName])
+  }, [api, params, fileName, t])
 
   return (
     <Button
@@ -70,7 +72,7 @@ export function ExportExcel<P extends Record<string, unknown> = Record<string, u
       className={[buttonProps?.className, className].filter(Boolean).join(' ') || undefined}
       style={{ ...buttonProps?.style, ...style }}
     >
-      {children}
+      {children ?? t('excel.export.button')}
     </Button>
   )
 }
